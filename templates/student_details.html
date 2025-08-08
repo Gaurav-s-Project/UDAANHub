@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Details: {{ student.student_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="logo">UDAAN<span>Hub</span></div>
+            {% if 'username' in session %}
+            <div class="user-info">
+                <span>Updating as: <strong>{{ session.username.capitalize() }}</strong></span>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+            {% endif %}
+        </header>
+
+        <main>
+            <div class="card">
+                <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                <h1>{{ student.student_name }}</h1>
+                <p><strong>Application ID:</strong> {{ student.student_identifier }}</p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form action="/update_status" method="post">
+                    <input type="hidden" name="student_id" value="{{ student.student_identifier }}">
+                    <h2>Registration Status</h2>
+                    
+                    <div class="stage">
+                        <div class="stage-details">
+                            <strong>1. Hostel/Mess:</strong> 
+                            <span class="status status-{{ student.stage1_hostel_status | replace(' ', '-') }}">{{ student.stage1_hostel_status }}</span>
+                            {% if student.stage1_hostel_by %}<br><small>by {{ student.stage1_hostel_by }} at {{ student.stage1_hostel_ts }}</small>{% endif %}
+                        </div>
+                        <div class="update-form">
+                            {% if student.stage1_hostel_status == 'Done' %}
+                                <button type="submit" name="action" value="unmark_hostel" class="unmark-btn">Unmark</button>
+                            {% else %}
+                                <button type="submit" name="action" value="mark_hostel" class="primary-btn">Mark as Done</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="stage">
+                        <div class="stage-details">
+                            <strong>2. Health Insurance:</strong>
+                            <span class="status status-{{ student.stage2_insurance_status | replace(' ', '-') }}">{{ student.stage2_insurance_status }}</span>
+                            {% if student.stage2_insurance_by %}<br><small>by {{ student.stage2_insurance_by }} at {{ student.stage2_insurance_ts }}</small>{% endif %}
+                        </div>
+                        <div class="update-form">
+                             {% if student.stage2_insurance_status == 'Done' %}
+                                <button type="submit" name="action" value="unmark_insurance" class="unmark-btn">Unmark</button>
+                            {% else %}
+                                <button type="submit" name="action" value="mark_insurance" class="primary-btn">Mark as Done</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="stage">
+                        <div class="stage-details">
+                            <strong>3. LHC Docs:</strong>
+                            <span class="status status-{{ student.stage3_lhc_docs_status | replace(' ', '-') }}">{{ student.stage3_lhc_docs_status }}</span>
+                            {% if student.stage3_lhc_docs_by %}<br><small>by {{ student.stage3_lhc_docs_by }} at {{ student.stage3_lhc_docs_ts }}</small>{% endif %}
+                        </div>
+                        <div class="update-form">
+                             {% if student.stage3_lhc_docs_status == 'Done' %}
+                                <button type="submit" name="action" value="unmark_lhc_docs" class="unmark-btn">Unmark</button>
+                            {% else %}
+                                <button type="submit" name="action" value="mark_lhc_docs_queue">Set 'In Queue'</button>
+                                <button type="submit" name="action" value="mark_lhc_docs_done" class="primary-btn">Mark 'Done'</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="stage">
+                        <div class="stage-details">
+                            <strong>4. Final DoAA Approval:</strong>
+                            <span class="status status-{{ student.stage4_doaa_status | replace(' ', '-') }}">{{ student.stage4_doaa_status }}</span>
+                            {% if student.stage4_doaa_by %}<br><small>by {{ student.stage4_doaa_by }} at {{ student.stage4_doaa_ts }}</small>{% endif %}
+                        </div>
+                        <div class="update-form">
+                            {% if student.stage4_doaa_status == 'Done' %}
+                                <button type="submit" name="action" value="unmark_doaa" class="unmark-btn">Unmark</button>
+                            {% else %}
+                                <button type="submit" name="action" value="mark_doaa" class="primary-btn">Mark as Done</button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <h2>Notes</h2>
+                <form action="/update_note" method="post" class="notes-form">
+                    <input type="hidden" name="student_id" value="{{ student.student_identifier }}">
+                    <textarea name="notes" rows="3" placeholder="Add any special notes here...">{{ student.Notes }}</textarea>
+                    <button type="submit" class="primary-btn">Save Note</button>
+                </form>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 Cyberheathens, IISER Bhopal. All Rights Reserved.</p>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

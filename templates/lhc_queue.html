@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- This meta tag will auto-refresh the page every 30 seconds -->
+    <meta http-equiv="refresh" content="30">
+    <title>Live LHC Queue</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="logo">UDAAN<span>Hub</span></div>
+            {% if 'username' in session %}
+            <div class="user-info">
+                <span>Welcome, <strong>{{ session.username.capitalize() }}</strong>!</span>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+            {% endif %}
+        </header>
+
+        <main>
+            <div class="card">
+                <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                <h1>Live LHC Queue</h1>
+                <p class="subtitle">This page automatically refreshes every 30 seconds. Last updated: {{ now.strftime('%H:%M:%S') }}</p>
+
+                <div class="queue-container">
+                    {% if queue %}
+                        <ol class="queue-list">
+                            {% for student in queue %}
+                                <li class="queue-item">
+                                    <span class="student-name">{{ student.student_name }}</span>
+                                    <span class="student-id">{{ student.student_identifier }}</span>
+                                    <a href="{{ url_for('search_student_get', search_term=student.student_identifier) }}" class="primary-btn view-btn">View/Update</a>
+                                </li>
+                            {% endfor %}
+                        </ol>
+                    {% else %}
+                        <div class="empty-queue">
+                            <h2>The queue is empty!</h2>
+                            <p>Great work, team!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 Cyberheathens, IISER Bhopal. All Rights Reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

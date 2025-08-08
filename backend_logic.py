@@ -6,16 +6,16 @@ import os
 import csv
 
 # --- Configuration ---
-# IMPORTANT: Replace with your actual JSON file name and Google Sheet name
 JSON_KEYFILE = 'creds.json' 
 SHEET_NAME = 'CampusArrival2025'
 
 # --- Advanced Feature Configuration ---
-STUCK_THRESHOLD_MINUTES = 45 # Time in minutes before a student is flagged as "stuck"
+STUCK_THRESHOLD_MINUTES = 45
 
-# IMPORTANT: Your Google Sheet MUST have these exact headers in the first row.
+# --- UPDATED: Headers list now includes a new 'Entry' stage ---
 EXPECTED_HEADERS = [
     'student_identifier', 'student_name', 
+    'stage0_entry_status', 'stage0_entry_by', 'stage0_entry_ts',
     'stage1_hostel_status', 'stage1_hostel_by', 'stage1_hostel_ts',
     'stage2_insurance_status', 'stage2_insurance_by', 'stage2_insurance_ts',
     'stage3_lhc_docs_status', 'stage3_lhc_docs_by', 'stage3_lhc_docs_ts',
@@ -33,76 +33,87 @@ def connect_to_sheet():
         sheet = client.open(SHEET_NAME).sheet1
         print("✅ Successfully connected to Google Sheet.")
         return sheet
-    except FileNotFoundError:
-        print(f"❌ ERROR: Credentials file not found at '{JSON_KEYFILE}'.")
-        return None
     except Exception as e:
         print(f"❌ An error occurred during connection: {e}")
         return None
 
-# --- NEW: Header Verification Tool ---
+# --- Header Verification Tool ---
 def verify_headers(sheet):
-    """
-    Checks if the headers in the Google Sheet match the expected headers.
-    Provides a detailed report if there is a mismatch.
-    """
+    """ Checks if the headers in the Google Sheet match the expected headers. """
     try:
         actual_headers = sheet.row_values(1)
-        expected_set = set(EXPECTED_HEADERS)
-        actual_set = set(actual_headers)
-
-        if expected_set == actual_set:
+        if set(EXPECTED_HEADERS) == set(actual_headers):
             print("✅ Headers verified successfully.")
             return True
-        
-        print("❌ CRITICAL ERROR: Google Sheet headers do not match expected headers.")
-        
-        missing_headers = expected_set - actual_set
-        if missing_headers:
-            print("\n  The following headers are MISSING from your Google Sheet:")
-            for header in sorted(list(missing_headers)):
-                print(f"    - {header}")
-
-        extra_headers = actual_set - expected_set
-        if extra_headers:
-            print("\n  The following headers in your Google Sheet are UNEXPECTED or MISSPELLED:")
-            for header in sorted(list(extra_headers)):
-                print(f"    - {header}")
-        
-        print("\n  Please correct the first row of your Google Sheet to match the required headers exactly.")
-        return False
-
-    except Exception as e:
-        print(f"❌ An error occurred during header verification: {e}")
-        print("   This might happen if the sheet is completely empty.")
+        else:
+            print("❌ CRITICAL ERROR: Google Sheet headers do not match.")
+            # Provide a detailed error for the developer in the console
+            expected_set = set(EXPECTED_HEADERS)
+            actual_set = set(actual_headers)
+            missing = expected_set - actual_set
+            extra = actual_set - expected_set
+            if missing:
+                print(f"   Missing headers in Sheet: {sorted(list(missing))}")
+            if extra:
+                print(f"   Unexpected headers in Sheet: {sorted(list(extra))}")
+            return False
+    except Exception:
+        print("❌ Could not verify headers. The sheet might be empty.")
         return False
 
 # --- Core Functions ---
 def find_student_row(sheet, search_term):
     """ Finds a student by their Application ID or Name and returns the row number. """
-    # FIX: Removed the incorrect try/except block. 
-    # sheet.find() returns None if not found, it does not raise CellNotFound.
-    cell = sheet.find(search_term)
-    if cell:
-        return cell.row
-    return None
+    try:
+        cell = sheet.find(search_term)
+        return cell.row if cell else None
+    except Exception:
+        return None
 
+# --- Functions for Web App ---
+def get_all_records_safely(sheet):
+    """ A robust function to fetch all records for the web app. """
+    try:
+        if sheet.row_count > 1:
+            return sheet.get_all_records(expected_headers=EXPECTED_HEADERS)
+        else:
+            return []
+    except Exception:
+        return []
+
+def add_student_from_webapp(sheet, app_id, student_name):
+    """ Adds a new student record to the sheet. Called by the web app. """
+    if find_student_row(sheet, app_id):
+        print(f"⚠️ Attempted to add duplicate student from web app: {app_id}")
+        return
+    # UPDATED: New row now has 18 columns for the new stage
+    new_row_data = [
+        app_id, student_name,
+        'Pending', '', '',  # Entry Gate
+        'Pending', '', '',  # Hostel
+        'Pending', '', '',  # Insurance
+        'Pending', '', '',  # LHC Docs
+        'Pending', '', '',  # DOAA
+        ''                 # Notes
+    ]
+    sheet.append_row(new_row_data)
+    print(f"✅ New student '{student_name}' ({app_id}) added via web app.")
+
+
+# --- Command-Line Tool Functions (Preserved and Updated) ---
 def add_student(sheet):
-    """ Adds a new student to the sheet with default values for all new columns. """
+    """ Adds a new student via command line input. """
     print("\n--- Add New Student ---")
     app_id = input("Enter Student's unique Application ID: ").strip()
-    
     if find_student_row(sheet, app_id):
         print(f"⚠️ Error: A student with Application ID '{app_id}' already exists.")
         return
-
     student_name = input("Enter Student's Full Name: ").strip()
-    
+    # UPDATED: New row now has 18 columns
     new_row_data = [
         app_id, student_name,
-        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''
+        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''
     ]
-    
     sheet.append_row(new_row_data)
     print(f"✅ Success: Student '{student_name}' ({app_id}) has been added.")
 
@@ -110,19 +121,19 @@ def search_and_update_student(sheet):
     """ Searches for a student and provides a menu to update their status. """
     print("\n--- Search & Update Student Status ---")
     search_term = input("Enter Student's Application ID or Full Name to search: ").strip()
-    
     row_number = find_student_row(sheet, search_term)
-    
     if not row_number:
-        print(f"❌ Error: No student found with search term '{search_term}'."); return
-        
+        print(f"❌ Error: No student found with search term '{search_term}'.")
+        return
+    
     student_data = sheet.row_values(row_number)
     
     print("\n--- Current Student Status ---")
     print(f"  ID:   {student_data[0]}")
     print(f"  Name: {student_data[1]}")
     print("-" * 50)
-    stages = ["Hostel/Mess", "Insurance", "LHC Docs", "Final DoAA"]
+    # UPDATED: Stages list now includes Entry Gate
+    stages = ["Entry Gate", "Hostel/Mess", "Insurance", "LHC Docs", "Final DoAA"]
     for i, stage_name in enumerate(stages):
         status_col = 2 + (i * 3)
         by_col = 3 + (i * 3)
@@ -136,17 +147,18 @@ def search_and_update_student(sheet):
         else:
             print(f"  {stage_name+':':<14} {status}")
     
-    notes = student_data[14] if len(student_data) > 14 and student_data[14] else ""
+    notes = student_data[17] if len(student_data) > 17 and student_data[17] else ""
     if notes:
         print(f"  {'Notes:':<14} {notes}")
     print("-" * 50)
 
     print("\nSelect the update point:")
-    print("  1. Update Hostel/Mess Status")
-    print("  2. Update Insurance Status")
-    print("  3. Update LHC Docs Status")
-    print("  4. Update Final DoAA Status")
-    print("  5. Add/Update a Note")
+    print("  1. Update Entry Gate Status")
+    print("  2. Update Hostel/Mess Status")
+    print("  3. Update Insurance Status")
+    print("  4. Update LHC Docs Status")
+    print("  5. Update Final DoAA Status")
+    print("  6. Add/Update a Note")
     print("  0. Back to Main Menu")
     
     try: choice = int(input("Enter your choice: "));
@@ -154,24 +166,24 @@ def search_and_update_student(sheet):
 
     if choice == 0: return
 
-    # NEW: Logic for Final DoAA check
-    if choice == 4:
-        # Check if all previous stages are 'Done'
-        hostel_done = student_data[2] == 'Done'
-        insurance_done = student_data[5] == 'Done'
-        lhc_docs_done = student_data[8] == 'Done'
-        if not (hostel_done and insurance_done and lhc_docs_done):
+    # UPDATED: DoAA check now includes the new Entry Gate stage
+    if choice == 5:
+        entry_done = student_data[2] == 'Done'
+        hostel_done = student_data[5] == 'Done'
+        insurance_done = student_data[8] == 'Done'
+        lhc_docs_done = student_data[11] == 'Done'
+        if not (entry_done and hostel_done and insurance_done and lhc_docs_done):
             print("\n❌ ERROR: Cannot give Final DoAA approval.")
-            print("   All previous stages (Hostel, Insurance, LHC Docs) must be 'Done'.")
+            print("   All previous stages must be 'Done'.")
             return
 
     volunteer_name = input("Enter your name (volunteer): ").strip()
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    if 1 <= choice <= 4:
+    if 1 <= choice <= 5:
         status_col = 2 + ((choice - 1) * 3)
         new_status = 'Done'
-        if choice == 3:
+        if choice == 4: # LHC Docs
             lhc_choice = input("   Enter status (a: In Queue, b: Done): ").lower()
             if lhc_choice == 'a': new_status = 'In Queue'
             elif lhc_choice == 'b': new_status = 'Done'
@@ -184,10 +196,9 @@ def search_and_update_student(sheet):
         ]
         sheet.update_cells(cells_to_update)
         print("✅ Status updated successfully.")
-
-    elif choice == 5:
+    elif choice == 6:
         note = input("Enter note: ").strip()
-        sheet.update_cell(row_number, 15, note)
+        sheet.update_cell(row_number, 18, note)
         print("✅ Note updated successfully.")
     else:
         print("Invalid choice.")
@@ -209,16 +220,6 @@ def delete_student(sheet):
         print(f"✅ Success: Record for '{app_id}' has been deleted.")
     else:
         print("Deletion cancelled.")
-
-# --- Advanced Feature Functions (Updated and Fixed) ---
-def get_all_records_safely(sheet):
-    """ A robust function to fetch all records, handling empty sheets. """
-    try:
-        records = sheet.get_all_records(expected_headers=EXPECTED_HEADERS)
-        return records
-    except Exception:
-        # This will now be caught by the header verification, but kept as a safeguard.
-        return []
 
 def show_dashboard(sheet):
     """ Displays a live summary dashboard. """
@@ -253,7 +254,7 @@ def view_lhc_queue(sheet):
         print(f"  {i}. {student.get('student_name')} (ID: {student.get('student_identifier')})")
 
 def bulk_upload_students(sheet):
-    """ Uploads students from a CSV file with the new 15-column structure. """
+    """ Uploads students from a CSV file with the new 18-column structure. """
     print("\n--- Bulk Student Upload ---")
     filename = 'students.csv'
     print(f"Looking for '{filename}' with columns: application_id,student_name (no header).")
@@ -263,7 +264,7 @@ def bulk_upload_students(sheet):
             new_students = []
             for row in reader:
                 if len(row) == 2:
-                    new_students.append([row[0], row[1], 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''])
+                    new_students.append([row[0], row[1], 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''])
             if new_students:
                 sheet.append_rows(new_students, value_input_option='USER_ENTERED')
                 print(f"✅ Success: {len(new_students)} students uploaded.")
@@ -283,7 +284,9 @@ def view_flagged_students(sheet):
     for student in all_records:
         if student.get('stage4_doaa_status') == 'Done': continue
         
-        timestamps = [student.get(f'stage{i+1}_{"hostel" if i==0 else "insurance" if i==1 else "lhc_docs" if i==2 else "doaa"}_ts') for i in range(4)]
+        # UPDATED: Logic now correctly checks all 5 stages for timestamps
+        stage_names = ['entry', 'hostel', 'insurance', 'lhc_docs', 'doaa']
+        timestamps = [student.get(f'stage{i}_{name}_ts') for i, name in enumerate(stage_names)]
         valid_timestamps = [ts for ts in timestamps if ts]
         
         if not valid_timestamps: continue
@@ -346,7 +349,6 @@ def main():
         time.sleep(5)
         return
 
-    # NEW: Run header verification on startup.
     if not verify_headers(sheet):
         print("\nProgram cannot continue due to header mismatch. Please fix the sheet and restart.")
         time.sleep(10)
@@ -355,7 +357,7 @@ def main():
     while True:
         os.system('cls' if os.name == 'nt' else 'clear') 
         
-        print("\n===== UDAAN: Volunteer Coordination System (v3.3) =====")
+        print("\n===== UDAAN: Volunteer Coordination System (v3.4) =====")
         print("\n--- Core Actions ---")
         print("  1. Add Student              2. Search & Update        3. Delete Student")
         print("\n--- Reporting & Intelligence ---")
@@ -384,16 +386,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# --- NEW FUNCTION TO FIX THE ERROR ---
-def add_student_from_webapp(sheet, app_id, student_name):
-    """ Adds a new student record to the sheet. Called by the web app. """
-    if find_student_row(sheet, app_id):
-        print(f"⚠️ Attempted to add duplicate student from web app: {app_id}")
-        return
-    new_row_data = [
-        app_id, student_name,
-        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''
-    ]
-    sheet.append_row(new_row_data)
-    print(f"✅ New student '{student_name}' ({app_id}) added via web app.")

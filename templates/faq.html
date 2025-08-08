@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer FAQ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="logo">UDAAN<span>Hub</span></div>
+            {% if 'username' in session %}
+            <div class="user-info">
+                <span>Welcome, <strong>{{ session.username.capitalize() }}</strong>!</span>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+            {% endif %}
+        </header>
+
+        <main>
+            <div class="card">
+                <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                <h1>Volunteer FAQs</h1>
+                <p class="subtitle">Your quick guide to the registration process.</p>
+
+                <div class="faq-item">
+                    <h2>Q1: What documents are required for verification at LHC?</h2>
+                    <p>Students need their original Class 10 & 12 mark sheets, IAT admit card, a valid photo ID (like Aadhaar or Passport), and the fee payment receipt.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h2>Q2: What if a student hasn't paid for health insurance?</h2>
+                    <p>Direct them to the designated SBI branch on campus to get the insurance first. They cannot proceed to the LHC for document verification without proof of insurance.</p>
+                </div>
+                
+                <div class="faq-item">
+                    <h2>Q3: What should I do if a student is missing a non-critical document?</h2>
+                    <p>Use the 'Add Note' function on the student's details page to record the missing document (e.g., "Missing migration certificate"). If the document is critical (like ID proof or mark sheets), they may need to wait for guidance from a DoSA/DoAA official.</p>
+                </div>
+
+                <div class="faq-item">
+                    <h2>Q4: How do I handle a complex issue or an angry parent?</h2>
+                    <p>Remain calm and polite. Do not argue. Escalate the issue immediately to the senior SAC coordinator on duty at your location.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 Cyberheathens, IISER Bhopal. All Rights Reserved.</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -38,7 +38,7 @@
                     
                     <div class="stage">
                         <div class="stage-details">
-                            <strong>1. Hostel/Mess:</strong> 
+                            <strong>1. Entry & Hostel Registration:</strong> 
                             <span class="status status-{{ student.stage1_hostel_status | replace(' ', '-') }}">{{ student.stage1_hostel_status }}</span>
                             {% if student.stage1_hostel_by %}<br><small>by {{ student.stage1_hostel_by }} at {{ student.stage1_hostel_ts }}</small>{% endif %}
                         </div>
@@ -68,7 +68,7 @@
 
                     <div class="stage">
                         <div class="stage-details">
-                            <strong>3. LHC Docs:</strong>
+                            <strong>3. LHC Registration:</strong>
                             <span class="status status-{{ student.stage3_lhc_docs_status | replace(' ', '-') }}">{{ student.stage3_lhc_docs_status }}</span>
                             {% if student.stage3_lhc_docs_by %}<br><small>by {{ student.stage3_lhc_docs_by }} at {{ student.stage3_lhc_docs_ts }}</small>{% endif %}
                         </div>
@@ -116,3 +116,4 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
+

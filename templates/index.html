@@ -15,6 +15,8 @@
             {% if 'username' in session %}
             <div class="user-info">
                 <span>Welcome, <strong>{{ session.username.capitalize() }}</strong>!</span>
+                <!-- ADD THIS LINE -->
+                <a href="/faq" class="nav-link">FAQ</a>
                 <a href="/logout" class="logout-btn">Logout</a>
             </div>
             {% endif %}

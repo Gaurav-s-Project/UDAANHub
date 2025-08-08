@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UDAAN Volunteer Hub</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <div class="container">
         <header class="app-header">
@@ -20,80 +22,88 @@
 
         <main>
             {% if 'username' in session %}
-                <!-- LOGGED-IN VIEW -->
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="flash {{ category }}">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+            <!-- LOGGED-IN VIEW -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
 
-                <!-- NEW: Conditional "Add Student" Card -->
-                {% if new_student_id %}
-                <div class="card" id="add-student-card">
-                    <h2>Add New Student</h2>
-                    <form action="/add" method="post" id="add-student-form">
-                        <div class="form-group">
-                            <label for="app_id">Application ID</label>
-                            <input type="text" id="app_id" name="app_id" value="{{ new_student_id }}" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label for="student_name">Student's Full Name</label>
-                            <input type="text" id="student_name" name="student_name" required placeholder="Enter full name...">
-                        </div>
-                        <button type="submit" class="primary-btn">Add Student</button>
-                    </form>
-                </div>
-                {% endif %}
+            <!-- NEW: Conditional "Add Student" Card -->
+            {% if new_student_id %}
+            <div class="card" id="add-student-card">
+                <h2>Add New Student</h2>
+                <form action="/add" method="post" id="add-student-form">
+                    <div class="form-group">
+                        <label for="app_id">Application ID</label>
+                        <input type="text" id="app_id" name="app_id" value="{{ new_student_id }}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="student_name">Student's Full Name</label>
+                        <input type="text" id="student_name" name="student_name" required
+                            placeholder="Enter full name...">
+                    </div>
+                    <button type="submit" class="primary-btn">Add Student</button>
+                </form>
+            </div>
+            {% endif %}
 
-                <div class="card" id="dashboard-card">
-                    <h1>Dashboard</h1>
-                    <div class="stats-container">
-                        <div class="stat-box">
-                            <h2>{{ dashboard_stats.total }}</h2>
-                            <p>Total Students</p>
-                        </div>
-                        <div class="stat-box">
-                            <h2>{{ dashboard_stats.completed }}</h2>
-                            <p>Registration Complete</p>
-                        </div>
-                        <div class="stat-box">
-                            <h2>{{ dashboard_stats.in_lhc_queue }}</h2>
-                            <p>In LHC Queue</p>
-                        </div>
+            <div class="card" id="dashboard-card">
+                <h1>Dashboard</h1>
+                <div class="stats-container">
+                    <div class="stat-box">
+                        <h2>{{ dashboard_stats.total }}</h2>
+                        <p>Total Students</p>
+                    </div>
+                    <div class="stat-box">
+                        <h2>{{ dashboard_stats.completed }}</h2>
+                        <p>Registration Complete</p>
+                    </div>
+                    <div class="stat-box">
+                        <h2>{{ dashboard_stats.in_lhc_queue }}</h2>
+                        <p>In LHC Queue</p>
                     </div>
                 </div>
+            </div>
 
-                <div class="card" id="search-card">
-                    <form action="/search" method="post" id="search-form">
-                        <h2>Search for a Student</h2>
-                        <input type="text" name="search_term" placeholder="Enter Application ID or Name" required>
-                        <button type="submit" class="primary-btn">Search</button>
-                    </form>
-                </div>
+            <div class="card" id="lhc-queue-link-card">
+                <a href="/lhc_queue" class="lhc-queue-link">
+                    <h2>Go to Live LHC Queue &rarr;</h2>
+                    <p>View and manage the real-time queue for document verification.</p>
+                </a>
+            </div>
+
+            <div class="card" id="search-card">
+                <form action="/search" method="post" id="search-form">
+                    <h2>Search for a Student</h2>
+                    <input type="text" name="search_term" placeholder="Enter Application ID or Name" required>
+                    <button type="submit" class="primary-btn">Search</button>
+                </form>
+            </div>
             {% else %}
-                <!-- LOGIN VIEW -->
-                <div class="card" id="login-container">
-                    <h1>Volunteer Login</h1>
-                    <p>Please log in to access the UDAAN Hub.</p>
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            <div class="flash {{ messages[0][0] }}">{{ messages[0][1] }}</div>
-                        {% endif %}
-                    {% endwith %}
-                    <form action="/login" method="post" id="login-form">
-                        <div class="form-group">
-                            <label for="username">Username</label>
-                            <input type="text" id="username" name="username" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="password">Password</label>
-                            <input type="password" id="password" name="password" required>
-                        </div>
-                        <button type="submit" class="primary-btn login-btn">Login</button>
-                    </form>
-                </div>
+            <!-- LOGIN VIEW -->
+            <div class="card" id="login-container">
+                <h1>Volunteer Login</h1>
+                <p>Please log in to access the UDAAN Hub.</p>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash {{ messages[0][0] }}">{{ messages[0][1] }}</div>
+                {% endif %}
+                {% endwith %}
+                <form action="/login" method="post" id="login-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="primary-btn login-btn">Login</button>
+                </form>
+            </div>
             {% endif %}
         </main>
 
@@ -103,4 +113,5 @@
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
+
 </html>

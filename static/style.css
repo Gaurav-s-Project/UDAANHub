@@ -74,6 +74,15 @@ body.dark-mode .app-header {
 .logo { font-size: 1.5rem; font-weight: 700; }
 .logo span { color: var(--primary-color); }
 .user-info { display: flex; align-items: center; gap: 1rem; }
+.nav-link {
+    font-weight: 500;
+    color: var(--text-muted-light);
+    transition: color 0.2s ease;
+}
+.nav-link:hover {
+    color: var(--primary-color);
+    text-decoration: none;
+}
 .logout-btn {
     background-color: #F3F4F6;
     color: var(--text-muted-light);
@@ -107,10 +116,10 @@ input:checked + .slider:before { transform: translateX(20px); }
 button { border: none; padding: 0.75rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: 600; transition: all var(--transition-speed) ease; }
 .primary-btn { background-color: var(--primary-color); color: white; }
 .primary-btn:hover { background-color: var(--primary-hover); transform: translateY(-2px); }
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], textarea {
     width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background-color: var(--light-bg); color: var(--text-dark);
 }
-input[type="text"]:focus, input[type="password"]:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+input[type="text"]:focus, input[type="password"]:focus, textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
 
 /* --- LOGIN & DASHBOARD SPECIFIC --- */
 #login-container label, #add-student-card label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
@@ -121,7 +130,7 @@ input[type="text"]:focus, input[type="password"]:focus { outline: none; border-c
 .stat-box h2 { font-size: 3rem; margin: 0; color: var(--primary-color); border: none; }
 .stat-box p { margin: 0.5rem 0 0; color: var(--text-muted-light); font-weight: 500; }
 
-/* --- NEW: Add Student Card Styles --- */
+/* --- ADD STUDENT CARD STYLES --- */
 #add-student-card {
     border-left: 5px solid var(--warning-color);
 }
@@ -135,23 +144,105 @@ body.dark-mode #add-student-card input[readonly] {
 }
 
 /* --- STUDENT DETAILS PAGE --- */
-.stage { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-light); }
+.stage { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-light); flex-wrap: wrap; gap: 1rem; }
 .stage:last-of-type { border-bottom: none; }
+.stage-details { flex-grow: 1; min-width: 200px; }
 .stage-details small { color: var(--text-muted-light); }
 .status { font-weight: 600; }
 .status-Pending { color: var(--warning-color); }
 .status-In-Queue { color: var(--primary-color); }
 .status-Done { color: var(--success-color); }
-.update-form { display: flex; gap: 0.5rem; }
+.update-form { display: flex; gap: 0.5rem; flex-shrink: 0; }
 .update-form button { padding: 0.5rem 1rem; font-size: 0.875rem; }
 .unmark-btn { background-color: var(--danger-color); color: white; }
 .unmark-btn:hover { background-color: var(--danger-hover); }
-textarea { width: 100%; min-height: 80px; padding: 0.75rem 1rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background-color: var(--light-bg); color: var(--text-dark); }
 
 /* --- FLASH MESSAGES --- */
 .flash { padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.5rem; color: white; font-weight: 500; opacity: 0; animation: slideDownFadeIn 0.5s ease-out forwards; }
 .flash.error { background-color: var(--danger-color); }
 .flash.success { background-color: var(--success-color); }
+
+/* --- LHC QUEUE LINK CARD ON DASHBOARD --- */
+#lhc-queue-link-card {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+    color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+#lhc-queue-link-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+.lhc-queue-link {
+    text-decoration: none;
+    color: white;
+    display: block;
+}
+.lhc-queue-link h2 {
+    color: white;
+    border: none;
+}
+.lhc-queue-link p {
+    opacity: 0.9;
+}
+
+/* --- LHC QUEUE & FAQ PAGE --- */
+.subtitle {
+    color: var(--text-muted-light);
+    margin-top: -1rem;
+    margin-bottom: 2rem;
+}
+.queue-list {
+    list-style: none;
+    padding: 0;
+}
+.queue-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-light);
+    animation: fadeIn 0.5s ease-out forwards;
+}
+.queue-item:last-child {
+    border-bottom: none;
+}
+.queue-item .student-name {
+    font-weight: 600;
+    flex-grow: 1;
+}
+.queue-item .student-id {
+    color: var(--text-muted-light);
+    margin-right: 1.5rem;
+}
+.view-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+.empty-queue {
+    text-align: center;
+    padding: 3rem;
+}
+.empty-queue h2 {
+    color: var(--success-color);
+    border: none;
+}
+.faq-item {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 1.5rem;
+}
+.faq-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+.faq-item h2 {
+    border: none;
+    margin-bottom: 0.5rem;
+}
+.faq-item p {
+    margin-top: 0;
+    color: var(--text-muted-light);
+    line-height: 1.7;
+}
 
 /* --- ANIMATIONS --- */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

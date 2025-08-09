@@ -7,13 +7,14 @@ import csv
 
 # --- Configuration ---
 JSON_KEYFILE = 'creds.json' 
-SHEET_NAME = 'CampusArrival2025'
+# UPDATED: This is now the name of the single spreadsheet FILE
+SPREADSHEET_NAME = 'CampusArrival2025' 
 
 # --- Advanced Feature Configuration ---
 STUCK_THRESHOLD_MINUTES = 45
 
-# --- UPDATED: Headers list now includes a new 'Entry' stage ---
-EXPECTED_HEADERS = [
+# --- Headers Configuration ---
+STUDENT_HEADERS = [
     'student_identifier', 'student_name', 
     'stage0_entry_status', 'stage0_entry_by', 'stage0_entry_ts',
     'stage1_hostel_status', 'stage1_hostel_by', 'stage1_hostel_ts',
@@ -22,43 +23,37 @@ EXPECTED_HEADERS = [
     'stage4_doaa_status', 'stage4_doaa_by', 'stage4_doaa_ts',
     'Notes'
 ]
+# NEW: Headers for the Volunteers sheet
+VOLUNTEER_HEADERS = ['username', 'password', 'role']
 
 # --- Connection to Google Sheets ---
-def connect_to_sheet():
-    """ Connects to the Google Sheet using service account credentials. """
+def connect_to_spreadsheet(spreadsheet_name):
+    """ Connects to a Google Spreadsheet file and returns the spreadsheet object. """
     try:
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_KEYFILE, scope)
         client = gspread.authorize(creds)
-        sheet = client.open(SHEET_NAME).sheet1
-        print("✅ Successfully connected to Google Sheet.")
-        return sheet
+        # This now opens the entire spreadsheet, not just the first sheet
+        spreadsheet = client.open(spreadsheet_name)
+        print(f"✅ Successfully connected to Google Sheet: {spreadsheet_name}")
+        return spreadsheet
     except Exception as e:
-        print(f"❌ An error occurred during connection: {e}")
+        print(f"❌ An error occurred connecting to {spreadsheet_name}: {e}")
         return None
 
 # --- Header Verification Tool ---
-def verify_headers(sheet):
-    """ Checks if the headers in the Google Sheet match the expected headers. """
+def verify_headers(sheet, headers):
+    """ Checks if the headers in a given sheet match the expected headers. """
     try:
         actual_headers = sheet.row_values(1)
-        if set(EXPECTED_HEADERS) == set(actual_headers):
-            print("✅ Headers verified successfully.")
+        if set(headers) == set(actual_headers):
+            print(f"✅ Headers for '{sheet.title}' verified successfully.")
             return True
         else:
-            print("❌ CRITICAL ERROR: Google Sheet headers do not match.")
-            # Provide a detailed error for the developer in the console
-            expected_set = set(EXPECTED_HEADERS)
-            actual_set = set(actual_headers)
-            missing = expected_set - actual_set
-            extra = actual_set - expected_set
-            if missing:
-                print(f"   Missing headers in Sheet: {sorted(list(missing))}")
-            if extra:
-                print(f"   Unexpected headers in Sheet: {sorted(list(extra))}")
+            print(f"❌ CRITICAL ERROR: Headers in '{sheet.title}' do not match.")
             return False
     except Exception:
-        print("❌ Could not verify headers. The sheet might be empty.")
+        print(f"❌ Could not verify headers for '{sheet.title}'. The sheet might be empty.")
         return False
 
 # --- Core Functions ---
@@ -71,11 +66,11 @@ def find_student_row(sheet, search_term):
         return None
 
 # --- Functions for Web App ---
-def get_all_records_safely(sheet):
+def get_all_records_safely(sheet, headers):
     """ A robust function to fetch all records for the web app. """
     try:
         if sheet.row_count > 1:
-            return sheet.get_all_records(expected_headers=EXPECTED_HEADERS)
+            return sheet.get_all_records(expected_headers=headers)
         else:
             return []
     except Exception:
@@ -84,20 +79,47 @@ def get_all_records_safely(sheet):
 def add_student_from_webapp(sheet, app_id, student_name):
     """ Adds a new student record to the sheet. Called by the web app. """
     if find_student_row(sheet, app_id):
-        print(f"⚠️ Attempted to add duplicate student from web app: {app_id}")
         return
-    # UPDATED: New row now has 18 columns for the new stage
     new_row_data = [
         app_id, student_name,
-        'Pending', '', '',  # Entry Gate
-        'Pending', '', '',  # Hostel
-        'Pending', '', '',  # Insurance
-        'Pending', '', '',  # LHC Docs
-        'Pending', '', '',  # DOAA
-        ''                 # Notes
+        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''
     ]
     sheet.append_row(new_row_data)
-    print(f"✅ New student '{student_name}' ({app_id}) added via web app.")
+
+# --- NEW: User Management Functions ---
+def get_all_users(sheet):
+    """ Fetches all users from the Volunteers sheet. """
+    return get_all_records_safely(sheet, VOLUNTEER_HEADERS)
+
+def find_user_row(sheet, username):
+    """ Finds a user by their username in the first column. """
+    try:
+        cell = sheet.find(username, in_column=1)
+        return cell.row if cell else None
+    except Exception: return None
+
+def add_user(sheet, username, password, role):
+    """ Adds a new user to the Volunteers sheet. """
+    if find_user_row(sheet, username):
+        return False # User already exists
+    sheet.append_row([username, password, role])
+    return True
+
+def update_user(sheet, original_username, new_username, new_password, new_role):
+    """ Updates a user's details. """
+    row_num = find_user_row(sheet, original_username)
+    if not row_num: return False
+    sheet.update_cell(row_num, 1, new_username)
+    sheet.update_cell(row_num, 2, new_password)
+    sheet.update_cell(row_num, 3, new_role)
+    return True
+
+def delete_user(sheet, username):
+    """ Deletes a user from the Volunteers sheet. """
+    row_num = find_user_row(sheet, username)
+    if not row_num: return False
+    sheet.delete_rows(row_num)
+    return True
 
 
 # --- Command-Line Tool Functions (Preserved and Updated) ---
@@ -109,7 +131,6 @@ def add_student(sheet):
         print(f"⚠️ Error: A student with Application ID '{app_id}' already exists.")
         return
     student_name = input("Enter Student's Full Name: ").strip()
-    # UPDATED: New row now has 18 columns
     new_row_data = [
         app_id, student_name,
         'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''
@@ -132,7 +153,6 @@ def search_and_update_student(sheet):
     print(f"  ID:   {student_data[0]}")
     print(f"  Name: {student_data[1]}")
     print("-" * 50)
-    # UPDATED: Stages list now includes Entry Gate
     stages = ["Entry Gate", "Hostel/Mess", "Insurance", "LHC Docs", "Final DoAA"]
     for i, stage_name in enumerate(stages):
         status_col = 2 + (i * 3)
@@ -166,7 +186,6 @@ def search_and_update_student(sheet):
 
     if choice == 0: return
 
-    # UPDATED: DoAA check now includes the new Entry Gate stage
     if choice == 5:
         entry_done = student_data[2] == 'Done'
         hostel_done = student_data[5] == 'Done'
@@ -174,7 +193,6 @@ def search_and_update_student(sheet):
         lhc_docs_done = student_data[11] == 'Done'
         if not (entry_done and hostel_done and insurance_done and lhc_docs_done):
             print("\n❌ ERROR: Cannot give Final DoAA approval.")
-            print("   All previous stages must be 'Done'.")
             return
 
     volunteer_name = input("Enter your name (volunteer): ").strip()
@@ -222,11 +240,11 @@ def delete_student(sheet):
         print("Deletion cancelled.")
 
 def show_dashboard(sheet):
-    """ Displays a live summary dashboard. """
+    """ Displays a live summary dashboard for the CLI. """
     print("\n--- Live Registration Dashboard ---")
-    all_records = get_all_records_safely(sheet)
+    all_records = get_all_records_safely(sheet, STUDENT_HEADERS)
     if not all_records: 
-        print("No student data found to generate a dashboard.")
+        print("No student data found.")
         return
 
     total = len(all_records)
@@ -241,20 +259,20 @@ def show_dashboard(sheet):
     print(f"  Students in LHC Queue:     {in_lhc_queue}  <-- CURRENT BOTTLENECK")
 
 def view_lhc_queue(sheet):
-    """ Displays a list of students currently in the LHC queue. """
+    """ Displays a list of students currently in the LHC queue for the CLI. """
     print("\n--- Students in LHC Verification Queue ---")
-    all_records = get_all_records_safely(sheet)
+    all_records = get_all_records_safely(sheet, STUDENT_HEADERS)
     if not all_records: 
         print("No student data found.")
         return
 
     queue = [r for r in all_records if r.get('stage3_lhc_docs_status') == 'In Queue']
-    if not queue: print("The LHC queue is currently empty. Great work!"); return
+    if not queue: print("The LHC queue is currently empty."); return
     for i, student in enumerate(queue, 1):
         print(f"  {i}. {student.get('student_name')} (ID: {student.get('student_identifier')})")
 
 def bulk_upload_students(sheet):
-    """ Uploads students from a CSV file with the new 18-column structure. """
+    """ Uploads students from a CSV file for the CLI. """
     print("\n--- Bulk Student Upload ---")
     filename = 'students.csv'
     print(f"Looking for '{filename}' with columns: application_id,student_name (no header).")
@@ -272,9 +290,9 @@ def bulk_upload_students(sheet):
     except FileNotFoundError: print(f"❌ Error: '{filename}' not found.")
 
 def view_flagged_students(sheet):
-    """ Identifies students who have been in a stage for too long. """
+    """ Identifies students who have been in a stage for too long for the CLI. """
     print(f"\n--- Flagged Students (Stuck for > {STUCK_THRESHOLD_MINUTES} mins) ---")
-    all_records = get_all_records_safely(sheet)
+    all_records = get_all_records_safely(sheet, STUDENT_HEADERS)
     if not all_records: 
         print("No student data found.")
         return
@@ -284,7 +302,6 @@ def view_flagged_students(sheet):
     for student in all_records:
         if student.get('stage4_doaa_status') == 'Done': continue
         
-        # UPDATED: Logic now correctly checks all 5 stages for timestamps
         stage_names = ['entry', 'hostel', 'insurance', 'lhc_docs', 'doaa']
         timestamps = [student.get(f'stage{i}_{name}_ts') for i, name in enumerate(stage_names)]
         valid_timestamps = [ts for ts in timestamps if ts]
@@ -302,7 +319,7 @@ def view_flagged_students(sheet):
     if flagged_count == 0: print("No students are currently flagged as stuck.")
 
 def show_volunteer_faq():
-    """ Displays a pre-written FAQ for volunteers. """
+    """ Displays a pre-written FAQ for the CLI. """
     print("\n--- Volunteer FAQ ---")
     faq_text = """
     Q1: What documents are required at LHC?
@@ -317,9 +334,9 @@ def show_volunteer_faq():
     print(faq_text)
 
 def generate_end_of_day_report(sheet):
-    """ Generates a summary text file of the day's activities. """
+    """ Generates a summary text file of the day's activities for the CLI. """
     print("\n--- Generating End-of-Day Report ---")
-    all_records = get_all_records_safely(sheet)
+    all_records = get_all_records_safely(sheet, STUDENT_HEADERS)
     if not all_records: 
         print("No student data found to generate a report.")
         return
@@ -341,15 +358,22 @@ def generate_end_of_day_report(sheet):
         
     print(f"✅ Success: Report saved as '{report_name}'.")
 
-# --- Main Application Loop ---
+# --- Main Application Loop for Command-Line Tool ---
 def main():
     """ The main function that runs the command-line interface menu. """
-    sheet = connect_to_sheet()
-    if not sheet: 
+    spreadsheet = connect_to_spreadsheet(SPREADSHEET_NAME)
+    if not spreadsheet: 
         time.sleep(5)
         return
 
-    if not verify_headers(sheet):
+    try:
+        student_sheet = spreadsheet.worksheet("Students")
+    except gspread.WorksheetNotFound:
+        print("❌ CRITICAL ERROR: 'Students' worksheet not found.")
+        time.sleep(5)
+        return
+
+    if not verify_headers(student_sheet, STUDENT_HEADERS):
         print("\nProgram cannot continue due to header mismatch. Please fix the sheet and restart.")
         time.sleep(10)
         return
@@ -357,7 +381,7 @@ def main():
     while True:
         os.system('cls' if os.name == 'nt' else 'clear') 
         
-        print("\n===== UDAAN: Volunteer Coordination System (v3.4) =====")
+        print("\n===== UDAAN: Volunteer CLI System =====")
         print("\n--- Core Actions ---")
         print("  1. Add Student              2. Search & Update        3. Delete Student")
         print("\n--- Reporting & Intelligence ---")
@@ -370,15 +394,15 @@ def main():
         try: choice = int(input("Enter your choice: "))
         except ValueError: print("Invalid input."); time.sleep(2); continue
 
-        if choice == 1: add_student(sheet)
-        elif choice == 2: search_and_update_student(sheet)
-        elif choice == 3: delete_student(sheet)
-        elif choice == 4: show_dashboard(sheet)
-        elif choice == 5: view_lhc_queue(sheet)
-        elif choice == 6: view_flagged_students(sheet)
-        elif choice == 7: bulk_upload_students(sheet)
+        if choice == 1: add_student(student_sheet)
+        elif choice == 2: search_and_update_student(student_sheet)
+        elif choice == 3: delete_student(student_sheet)
+        elif choice == 4: show_dashboard(student_sheet)
+        elif choice == 5: view_lhc_queue(student_sheet)
+        elif choice == 6: view_flagged_students(student_sheet)
+        elif choice == 7: bulk_upload_students(student_sheet)
         elif choice == 8: show_volunteer_faq()
-        elif choice == 9: generate_end_of_day_report(sheet)
+        elif choice == 9: generate_end_of_day_report(student_sheet)
         elif choice == 0: print("Exiting program. Goodbye!"); break
         else: print("Invalid choice.")
         

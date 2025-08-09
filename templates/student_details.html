@@ -10,12 +10,27 @@
     <div class="container">
         <header class="app-header">
             <div class="logo">UDAAN<span>Hub</span></div>
-            {% if 'username' in session %}
-            <div class="user-info">
-                <span>Updating as: <strong>{{ session.username.capitalize() }}</strong></span>
-                <a href="/logout" class="logout-btn">Logout</a>
+            
+            <nav class="nav-menu">
+                {% if 'username' in session %}
+                    <a href="/profile" class="nav-link">Profile</a>
+                    {% if session.role == 'admin' %}
+                        <a href="/admin" class="nav-link">Admin Panel</a>
+                    {% endif %}
+                    <a href="/faq" class="nav-link">FAQ</a>
+                    <a href="/logout" class="logout-btn">Logout</a>
+                {% endif %}
+                <label class="dark-mode-switch">
+                    <input type="checkbox">
+                    <span class="slider"></span>
+                </label>
+            </nav>
+
+            <div class="hamburger">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
             </div>
-            {% endif %}
         </header>
 
         <main>
@@ -38,7 +53,22 @@
                     
                     <div class="stage">
                         <div class="stage-details">
-                            <strong>1. Entry & Hostel Registration:</strong> 
+                            <strong>1. Entry Gate:</strong> 
+                            <span class="status status-{{ student.stage0_entry_status | replace(' ', '-') }}">{{ student.stage0_entry_status }}</span>
+                            {% if student.stage0_entry_by %}<br><small>by {{ student.stage0_entry_by }} at {{ student.stage0_entry_ts }}</small>{% endif %}
+                        </div>
+                        <div class="update-form">
+                            {% if student.stage0_entry_status == 'Done' %}
+                                <button type="submit" name="action" value="unmark_entry" class="unmark-btn">Unmark</button>
+                            {% else %}
+                                <button type="submit" name="action" value="mark_entry" class="primary-btn">Mark as Done</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="stage">
+                        <div class="stage-details">
+                            <strong>2. Hostel Registration:</strong>
                             <span class="status status-{{ student.stage1_hostel_status | replace(' ', '-') }}">{{ student.stage1_hostel_status }}</span>
                             {% if student.stage1_hostel_by %}<br><small>by {{ student.stage1_hostel_by }} at {{ student.stage1_hostel_ts }}</small>{% endif %}
                         </div>
@@ -53,7 +83,7 @@
 
                     <div class="stage">
                         <div class="stage-details">
-                            <strong>2. Health Insurance:</strong>
+                            <strong>3. Health Insurance:</strong>
                             <span class="status status-{{ student.stage2_insurance_status | replace(' ', '-') }}">{{ student.stage2_insurance_status }}</span>
                             {% if student.stage2_insurance_by %}<br><small>by {{ student.stage2_insurance_by }} at {{ student.stage2_insurance_ts }}</small>{% endif %}
                         </div>
@@ -68,7 +98,7 @@
 
                     <div class="stage">
                         <div class="stage-details">
-                            <strong>3. LHC Registration:</strong>
+                            <strong>4. LHC Registration:</strong>
                             <span class="status status-{{ student.stage3_lhc_docs_status | replace(' ', '-') }}">{{ student.stage3_lhc_docs_status }}</span>
                             {% if student.stage3_lhc_docs_by %}<br><small>by {{ student.stage3_lhc_docs_by }} at {{ student.stage3_lhc_docs_ts }}</small>{% endif %}
                         </div>
@@ -84,7 +114,7 @@
 
                     <div class="stage">
                         <div class="stage-details">
-                            <strong>4. Final DoAA Approval:</strong>
+                            <strong>5. Final DoAA Approval:</strong>
                             <span class="status status-{{ student.stage4_doaa_status | replace(' ', '-') }}">{{ student.stage4_doaa_status }}</span>
                             {% if student.stage4_doaa_by %}<br><small>by {{ student.stage4_doaa_by }} at {{ student.stage4_doaa_ts }}</small>{% endif %}
                         </div>
@@ -116,4 +146,3 @@
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
-

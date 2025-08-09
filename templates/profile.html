@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <div class="logo">UDAAN<span>Hub</span></div>
+            <div class="user-info">
+                <span>Welcome, <strong>{{ session.username.capitalize() }}</strong>!</span>
+                <a href="/" class="nav-link">Dashboard</a>
+                {% if session.role == 'admin' %}
+                    <a href="/admin" class="nav-link">Admin Panel</a>
+                {% endif %}
+                <a href="/faq" class="nav-link">FAQ</a>
+                <a href="/logout" class="logout-btn">Logout</a>
+            </div>
+        </header>
+
+        <main>
+            <div class="card">
+                <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                <h1>My Profile</h1>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form action="/profile/update" method="post">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" value="{{ user.username }}" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">New Password</label>
+                        <input type="password" id="password" name="password" value="{{ user.password }}" required>
+                    </div>
+                     <div class="form-group">
+                        <label for="role">Role</label>
+                        <input type="text" id="role" name="role" value="{{ user.role.capitalize() }}" readonly>
+                    </div>
+                    <button type="submit" class="primary-btn">Update Password</button>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

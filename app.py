@@ -191,6 +191,8 @@ def update_note():
     flash("Note updated successfully.", "success")
     return redirect(url_for('search_student_get', search_term=student_id))
     
+# In app.py, find the /update_student_details route
+
 @app.route('/update_student_details', methods=['POST'])
 def update_student_details():
     if 'username' not in session: return redirect(url_for('index'))
@@ -199,6 +201,15 @@ def update_student_details():
     original_id = request.form.get('original_student_id')
     new_name = request.form.get('student_name').strip()
     new_id = request.form.get('student_identifier').strip()
+
+    # --- ADD THIS BLOCK to check for duplicate Application IDs ---
+    if original_id != new_id:
+        existing_student_row = backend.find_student_row(student_sheet, new_id)
+        if existing_student_row:
+            flash(f"Error: Application ID '{new_id}' already exists for another student.", "error")
+            # Redirect back to the details page of the ORIGINAL student
+            return redirect(url_for('search_student_get', search_term=original_id))
+    # --- END of new block ---
 
     row_number = backend.find_student_row(student_sheet, original_id)
     if not row_number:
@@ -289,6 +300,8 @@ def edit_user_page(username):
     if not user: return redirect(url_for('admin_panel'))
     return render_template('edit_user.html', user=user)
 
+# In app.py, REPLACE the existing /admin/update_user route with this one
+
 @app.route('/admin/update_user', methods=['POST'])
 @admin_required
 def update_user():
@@ -296,13 +309,24 @@ def update_user():
     new_username = request.form.get('username').lower().strip()
     new_password = request.form.get('password')
     new_role = request.form.get('role', 'volunteer')
+
     if original_username == 'admin' and session['username'] != 'admin':
         flash("You do not have permission to edit the primary admin account.", "error")
         return redirect(url_for('admin_panel'))
-    backend.update_user(volunteer_sheet, original_username, new_username, new_password, new_role)
-    flash(f"User '{original_username}' updated successfully.", "success")
-    return redirect(url_for('admin_panel'))
 
+    # This now uses the smarter backend function
+    result = backend.update_user(volunteer_sheet, original_username, new_username, new_password, new_role)
+    
+    if result == "success":
+        flash(f"User '{original_username}' updated successfully.", "success")
+        return redirect(url_for('admin_panel'))
+    elif result == "duplicate":
+        flash(f"Error: Username '{new_username}' already exists.", "error")
+        # Redirect back to the edit page for the original user to allow correction
+        return redirect(url_for('edit_user_page', username=original_username))
+    else: # "not_found"
+        flash(f"Error: Could not find user '{original_username}' to update.", "error")
+        return redirect(url_for('admin_panel'))
 @app.route('/admin/delete_user/<username>')
 @admin_required
 def delete_user(username):

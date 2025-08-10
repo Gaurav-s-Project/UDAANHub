@@ -213,6 +213,32 @@ def lhc_queue():
     now = datetime.now()
     return render_template('lhc_queue.html', queue=queue_list, now=now)
 
+# --- NEW: Route to handle marking LHC as done from the queue page ---
+@app.route('/lhc_queue/mark_done', methods=['POST'])
+def lhc_mark_done():
+    if 'username' not in session: return redirect(url_for('index'))
+    if not student_sheet: return "Error: Could not connect to Student Sheet."
+
+    student_id = request.form['student_id']
+    volunteer_name = session['username'].capitalize()
+    
+    row_number = backend.find_student_row(student_sheet, student_id)
+    if not row_number: 
+        flash(f"Student '{student_id}' not found during update.", "error")
+        return redirect(url_for('lhc_queue'))
+
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Columns for stage3_lhc_docs are 12, 13, 14
+    cells_to_update = [
+        gspread.Cell(row_number, 12, 'Done'),
+        gspread.Cell(row_number, 13, volunteer_name),
+        gspread.Cell(row_number, 14, timestamp)
+    ]
+    student_sheet.update_cells(cells_to_update)
+    flash(f"Student {student_id} marked as done for LHC.", "success")
+    return redirect(url_for('lhc_queue'))
+
 @app.route('/faq')
 def faq():
     if 'username' not in session: return redirect(url_for('index'))

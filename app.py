@@ -15,7 +15,6 @@ if spreadsheet:
     try:
         student_sheet = spreadsheet.worksheet('Students')
         volunteer_sheet = spreadsheet.worksheet('Volunteers')
-        print("✅ Successfully accessed 'Students' and 'Volunteers' worksheets.")
         # Verify headers for both sheets
         backend.verify_headers(student_sheet, backend.STUDENT_HEADERS)
         backend.verify_headers(volunteer_sheet, backend.VOLUNTEER_HEADERS)
@@ -191,6 +190,26 @@ def update_note():
     student_sheet.update_cell(row_number, 18, notes)
     flash("Note updated successfully.", "success")
     return redirect(url_for('search_student_get', search_term=student_id))
+    
+@app.route('/update_student_details', methods=['POST'])
+def update_student_details():
+    if 'username' not in session: return redirect(url_for('index'))
+    if not student_sheet: return "Error: Could not connect to Student Sheet."
+
+    original_id = request.form.get('original_student_id')
+    new_name = request.form.get('student_name').strip()
+    new_id = request.form.get('student_identifier').strip()
+
+    row_number = backend.find_student_row(student_sheet, original_id)
+    if not row_number:
+        flash(f"Could not find original student '{original_id}' to update.", "error")
+        return redirect(url_for('index'))
+
+    student_sheet.update_cell(row_number, 1, new_id)
+    student_sheet.update_cell(row_number, 2, new_name)
+
+    flash("Student details updated successfully.", "success")
+    return redirect(url_for('search_student_get', search_term=new_id))
 
 @app.route('/search_get')
 def search_student_get():
@@ -213,7 +232,6 @@ def lhc_queue():
     now = datetime.now()
     return render_template('lhc_queue.html', queue=queue_list, now=now)
 
-# --- NEW: Route to handle marking LHC as done from the queue page ---
 @app.route('/lhc_queue/mark_done', methods=['POST'])
 def lhc_mark_done():
     if 'username' not in session: return redirect(url_for('index'))
@@ -229,7 +247,6 @@ def lhc_mark_done():
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     
-    # Columns for stage3_lhc_docs are 12, 13, 14
     cells_to_update = [
         gspread.Cell(row_number, 12, 'Done'),
         gspread.Cell(row_number, 13, volunteer_name),

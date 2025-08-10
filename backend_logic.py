@@ -105,14 +105,23 @@ def add_user(sheet, username, password, role):
     sheet.append_row([username, password, role])
     return True
 
+# In backend_logic.py, REPLACE the existing update_user function with this one
+
 def update_user(sheet, original_username, new_username, new_password, new_role):
-    """ Updates a user's details. """
+    """ Updates a user's details, checking for duplicate usernames. """
+    # Check if the new username already exists, but only if the username is being changed.
+    if original_username != new_username and find_user_row(sheet, new_username):
+        return "duplicate" # Return a specific string for a duplicate error
+
     row_num = find_user_row(sheet, original_username)
-    if not row_num: return False
+    if not row_num:
+        return "not_found" # Return a string if the original user isn't found
+    
+    # If checks pass, update the cells
     sheet.update_cell(row_num, 1, new_username)
     sheet.update_cell(row_num, 2, new_password)
     sheet.update_cell(row_num, 3, new_role)
-    return True
+    return "success" # Return a success message
 
 def delete_user(sheet, username):
     """ Deletes a user from the Volunteers sheet. """

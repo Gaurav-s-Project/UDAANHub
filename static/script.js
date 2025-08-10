@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const header = document.querySelector('.app-header');
-    const darkModeSwitch = document.querySelector('.dark-mode-switch input');
-    const flashMessages = document.querySelectorAll('.flash');
-    // NEW: Get hamburger elements
     const hamburger = document.querySelector('.hamburger');
     const navMenu = document.querySelector('.nav-menu');
+    const darkModeSwitch = document.querySelector('.dark-mode-switch input');
+    const flashMessages = document.querySelectorAll('.flash');
+    const cards = document.querySelectorAll('.card');
+    const queueSearchInput = document.getElementById('queue-search');
 
     // 1. Sticky Header Effect
     if (header) {
@@ -17,7 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 2. Dark Mode Toggle & Persistence
+    // 2. Hamburger Menu Toggle
+    if (hamburger && navMenu) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navMenu.classList.toggle('active');
+        });
+    }
+
+    // 3. Dark Mode Toggle & Persistence
     if (darkModeSwitch) {
         const currentTheme = localStorage.getItem('theme');
         if (currentTheme === 'dark') {
@@ -31,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. Auto-hide Flash Messages
+    // 4. Auto-hide Flash Messages
     if (flashMessages.length > 0) {
         flashMessages.forEach(function(message) {
             setTimeout(() => {
@@ -42,11 +51,44 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 4. NEW: Hamburger Menu Toggle Logic
-    if (hamburger && navMenu) {
-        hamburger.addEventListener('click', () => {
-            hamburger.classList.toggle('active');
-            navMenu.classList.toggle('active');
+    // 5. Scroll-based Animations for Cards
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, {
+        threshold: 0.1
+    });
+
+    cards.forEach(card => {
+        observer.observe(card);
+    });
+
+    // 6. Live Search for LHC Queue
+    if (queueSearchInput) {
+        const queueItems = document.querySelectorAll('.queue-item');
+        const noResultsMessage = document.getElementById('no-results-message');
+
+        queueSearchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            let visibleCount = 0;
+
+            queueItems.forEach(item => {
+                const itemText = item.textContent.toLowerCase();
+                if (itemText.includes(searchTerm)) {
+                    item.style.display = 'flex';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (noResultsMessage) {
+                noResultsMessage.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
         });
     }
 });

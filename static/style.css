@@ -165,6 +165,7 @@ body.dark-mode #add-student-card input[readonly] {
 }
 
 /* --- STUDENT DETAILS PAGE --- */
+.student-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .stage { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid var(--border-light); flex-wrap: wrap; gap: 1rem; }
 .stage:last-of-type { border-bottom: none; }
 .stage-details { flex-grow: 1; min-width: 200px; }
@@ -182,29 +183,6 @@ body.dark-mode #add-student-card input[readonly] {
 .flash { padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.5rem; color: white; font-weight: 500; opacity: 0; animation: slideDownFadeIn 0.5s ease-out forwards; }
 .flash.error { background-color: var(--danger-color); }
 .flash.success { background-color: var(--success-color); }
-
-/* --- LHC QUEUE LINK CARD ON DASHBOARD --- */
-#lhc-queue-link-card {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
-    color: white;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-#lhc-queue-link-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-}
-.lhc-queue-link {
-    text-decoration: none;
-    color: white;
-    display: block;
-}
-.lhc-queue-link h2 {
-    color: white;
-    border: none;
-}
-.lhc-queue-link p {
-    opacity: 0.9;
-}
 
 /* --- LHC QUEUE & FAQ PAGE --- */
 .subtitle { color: var(--text-muted-light); margin-top: -1rem; margin-bottom: 2rem; }
@@ -242,6 +220,54 @@ body.dark-mode .role-volunteer { background-color: #4338CA; color: #E0E7FF; }
 .action-btn.edit { background-color: #F3F4F6; color: var(--text-muted-light); }
 body.dark-mode .action-btn.edit { background-color: #4B5563; color: var(--text-light); }
 .action-btn.delete { background-color: var(--danger-color); color: white; }
+
+/* --- MODAL STYLES --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}
+.modal-content {
+    background-color: var(--light-card);
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    position: relative;
+    transform: translateY(-20px);
+    transition: transform 0.3s ease;
+}
+.modal-overlay.visible .modal-content {
+    transform: translateY(0);
+}
+.close-modal {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: var(--text-muted-light);
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.close-modal:hover {
+    color: var(--danger-color);
+}
 
 /* --- RESPONSIVE DESIGN --- */
 @media (max-width: 768px) {

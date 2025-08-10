@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const darkModeSwitch = document.querySelector('.dark-mode-switch input');
     const flashMessages = document.querySelectorAll('.flash');
     const cards = document.querySelectorAll('.card');
+    const editModal = document.getElementById('edit-modal');
+    const editDetailsBtn = document.getElementById('edit-details-btn');
+    const closeModalBtn = document.querySelector('.close-modal');
     const queueSearchInput = document.getElementById('queue-search');
 
     // 1. Sticky Header Effect
@@ -67,7 +70,35 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.observe(card);
     });
 
-    // 6. Live Search for LHC Queue
+    // 6. Edit Details Modal Logic
+    if (editDetailsBtn && editModal) {
+        editDetailsBtn.addEventListener('click', () => {
+            editModal.style.display = 'flex';
+            setTimeout(() => {
+                editModal.classList.add('visible');
+            }, 10);
+        });
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', () => {
+                editModal.classList.remove('visible');
+                setTimeout(() => {
+                    editModal.style.display = 'none';
+                }, 300);
+            });
+        }
+
+        editModal.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                editModal.classList.remove('visible');
+                setTimeout(() => {
+                    editModal.style.display = 'none';
+                }, 300);
+            }
+        });
+    }
+
+    // 7. Live Search for LHC Queue
     if (queueSearchInput) {
         const queueItems = document.querySelectorAll('.queue-item');
         const noResultsMessage = document.getElementById('no-results-message');

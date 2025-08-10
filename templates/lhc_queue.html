@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- This meta tag will auto-refresh the page every 30 seconds -->
     <meta http-equiv="refresh" content="30">
     <title>Live LHC Queue</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -15,6 +14,7 @@
             {% if 'username' in session %}
             <div class="user-info">
                 <span>Welcome, <strong>{{ session.username.capitalize() }}</strong>!</span>
+                <a href="/" class="nav-link">Dashboard</a>
                 <a href="/logout" class="logout-btn">Logout</a>
             </div>
             {% endif %}
@@ -25,6 +25,19 @@
                 <a href="/" class="back-link">&larr; Back to Dashboard</a>
                 <h1>Live LHC Queue</h1>
                 <p class="subtitle">This page automatically refreshes every 30 seconds. Last updated: {{ now.strftime('%H:%M:%S') }}</p>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- NEW: Search box for the queue -->
+                <div class="search-wrapper">
+                    <input type="text" id="queue-search" placeholder="Search by name or ID...">
+                </div>
 
                 <div class="queue-container">
                     {% if queue %}
@@ -33,10 +46,20 @@
                                 <li class="queue-item">
                                     <span class="student-name">{{ student.student_name }}</span>
                                     <span class="student-id">{{ student.student_identifier }}</span>
-                                    <a href="{{ url_for('search_student_get', search_term=student.student_identifier) }}" class="primary-btn view-btn">View/Update</a>
+                                    <div class="queue-actions">
+                                        <form action="/lhc_queue/mark_done" method="post" class="inline-form">
+                                            <input type="hidden" name="student_id" value="{{ student.student_identifier }}">
+                                            <button type="submit" class="action-btn done-btn">Mark as Done</button>
+                                        </form>
+                                        <a href="{{ url_for('search_student_get', search_term=student.student_identifier) }}" class="action-btn view-btn">View/Update</a>
+                                    </div>
                                 </li>
                             {% endfor %}
                         </ol>
+                        <!-- NEW: Message to show when no results are found -->
+                        <div id="no-results-message" class="empty-queue" style="display: none;">
+                            <h2>No students found matching your search.</h2>
+                        </div>
                     {% else %}
                         <div class="empty-queue">
                             <h2>The queue is empty!</h2>
@@ -51,5 +74,6 @@
             <p>&copy; 2025 Cyberheathens, IISER Bhopal. All Rights Reserved.</p>
         </footer>
     </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

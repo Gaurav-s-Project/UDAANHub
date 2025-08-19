@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Students</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    {% if announcement %}
+    <div class="broadcast-banner">
+        <p class="scrolling-text">{{ announcement }}</p>
+    </div>
+    {% endif %}
+
+    <div class="container">
+        <header class="app-header">
+            <div class="logo">UDAAN<span>Hub</span></div>
+            <nav class="nav-menu">
+                {% if 'username' in session %}
+                    <a href="/" class="nav-link">Dashboard</a>
+                    <a href="/leaderboard" class="nav-link">Leaderboard</a>
+                    <a href="/profile" class="nav-link">Profile</a>
+                    {% if session.role == 'admin' %}
+                        <a href="/admin" class="nav-link">Admin Panel</a>
+                        <a href="/admin/faq" class="nav-link">Manage FAQ</a>
+                    {% endif %}
+                    <a href="/faq" class="nav-link">FAQ</a>
+                    <a href="/logout" class="logout-btn">Logout</a>
+                {% endif %}
+                <!-- <label class="dark-mode-switch">
+                    <input type="checkbox">
+                    <span class="slider"></span>
+                </label> -->
+            </nav>
+            <div class="hamburger">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </header>
+
+        <main>
+            <div class="card">
+                <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                <h1>All Students ({{ students|length }})</h1>
+                <div class="search-wrapper">
+                    <input type="text" id="student-list-search" placeholder="Filter by name or ID...">
+                </div>
+                <div class="student-list-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Application ID</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in students %}
+                            <tr class="student-row">
+                                <td data-label="Name">{{ student.student_name }}</td>
+                                <td data-label="Application ID">{{ student.student_identifier }}</td>
+                                <td data-label="Status"><span class="status status-{{ student.stage4_doaa_status }}">{{ student.stage4_doaa_status }}</span></td>
+                                <td data-label="Actions">
+                                    <a href="{{ url_for('search_student_get', search_term=student.student_identifier) }}" class="action-btn view-btn">View/Edit</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 Cyberheathens, IISER Bhopal. All Rights Reserved.</p>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

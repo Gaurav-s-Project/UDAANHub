@@ -88,10 +88,12 @@
                         <h2>{{ dashboard_stats.completed }}</h2>
                         <p>Registration Complete</p>
                     </div>
-                    <div class="stat-box">
-                        <h2>{{ dashboard_stats.in_lhc_queue }}</h2>
-                        <p>In LHC Queue</p>
-                    </div>
+                     <!-- UPDATED: This is the new dynamic, color-coded LHC queue box -->
+                    <a href="{{ url_for('lhc_queue') }}" 
+                           class="stat-box lhc-queue {% if dashboard_stats.in_lhc_queue >= 30 %}lhc-danger{% else %}lhc-safe{% endif %}">
+                            <h2>{{ dashboard_stats.in_lhc_queue }}</h2>
+                            <p>In LHC Queue</p>
+                    </a>
                     <a href="{{ url_for('flagged_students') }}" class="stat-box flagged">
                         <h2>{{ dashboard_stats.flagged }}</h2>
                         <p>Flagged for Assistance</p>
@@ -146,3 +148,4 @@
 </body>
 
 </html>
+

@@ -4,14 +4,11 @@ from datetime import datetime, timedelta
 import time
 import os
 import csv
+from collections import Counter
 
 # --- Configuration ---
 JSON_KEYFILE = 'creds.json' 
-# UPDATED: This is now the name of the single spreadsheet FILE
 SPREADSHEET_NAME = 'CampusArrival2025' 
-
-# --- Advanced Feature Configuration ---
-STUCK_THRESHOLD_MINUTES = 45
 
 # --- Headers Configuration ---
 STUDENT_HEADERS = [
@@ -21,19 +18,19 @@ STUDENT_HEADERS = [
     'stage2_insurance_status', 'stage2_insurance_by', 'stage2_insurance_ts',
     'stage3_lhc_docs_status', 'stage3_lhc_docs_by', 'stage3_lhc_docs_ts',
     'stage4_doaa_status', 'stage4_doaa_by', 'stage4_doaa_ts',
-    'Notes'
+    'Notes', 'flagged'
 ]
-# NEW: Headers for the Volunteers sheet
 VOLUNTEER_HEADERS = ['username', 'password', 'role']
+FAQ_HEADERS = ['question', 'answer']
+ANNOUNCEMENT_HEADERS = ['message']
 
-# --- Connection to Google Sheets ---
+# --- Connection Functions ---
 def connect_to_spreadsheet(spreadsheet_name):
     """ Connects to a Google Spreadsheet file and returns the spreadsheet object. """
     try:
         scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
         creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_KEYFILE, scope)
         client = gspread.authorize(creds)
-        # This now opens the entire spreadsheet, not just the first sheet
         spreadsheet = client.open(spreadsheet_name)
         print(f"✅ Successfully connected to Google Sheet: {spreadsheet_name}")
         return spreadsheet
@@ -51,6 +48,14 @@ def verify_headers(sheet, headers):
             return True
         else:
             print(f"❌ CRITICAL ERROR: Headers in '{sheet.title}' do not match.")
+            expected_set = set(headers)
+            actual_set = set(actual_headers)
+            missing = expected_set - actual_set
+            extra = actual_set - expected_set
+            if missing:
+                print(f"   Missing headers in Sheet: {sorted(list(missing))}")
+            if extra:
+                print(f"   Unexpected headers in Sheet: {sorted(list(extra))}")
             return False
     except Exception:
         print(f"❌ Could not verify headers for '{sheet.title}'. The sheet might be empty.")
@@ -82,11 +87,21 @@ def add_student_from_webapp(sheet, app_id, student_name):
         return
     new_row_data = [
         app_id, student_name,
-        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''
+        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', '', 'no'
     ]
     sheet.append_row(new_row_data)
+    print(f"✅ New student '{student_name}' ({app_id}) added via web app.")
 
-# --- NEW: User Management Functions ---
+# ADD this new function to backend_logic.py
+def update_student_flag(sheet, student_id, flag_status):
+    """ Updates the 'flagged' status for a student. """
+    row_num = find_student_row(sheet, student_id)
+    if not row_num: return False
+    # Column S is the 19th column
+    sheet.update_cell(row_num, 19, flag_status)
+    return True
+
+# --- User Management Functions ---
 def get_all_users(sheet):
     """ Fetches all users from the Volunteers sheet. """
     return get_all_records_safely(sheet, VOLUNTEER_HEADERS)
@@ -105,23 +120,16 @@ def add_user(sheet, username, password, role):
     sheet.append_row([username, password, role])
     return True
 
-# In backend_logic.py, REPLACE the existing update_user function with this one
-
 def update_user(sheet, original_username, new_username, new_password, new_role):
     """ Updates a user's details, checking for duplicate usernames. """
-    # Check if the new username already exists, but only if the username is being changed.
     if original_username != new_username and find_user_row(sheet, new_username):
-        return "duplicate" # Return a specific string for a duplicate error
-
+        return "duplicate"
     row_num = find_user_row(sheet, original_username)
-    if not row_num:
-        return "not_found" # Return a string if the original user isn't found
-    
-    # If checks pass, update the cells
+    if not row_num: return "not_found"
     sheet.update_cell(row_num, 1, new_username)
     sheet.update_cell(row_num, 2, new_password)
     sheet.update_cell(row_num, 3, new_role)
-    return "success" # Return a success message
+    return "success"
 
 def delete_user(sheet, username):
     """ Deletes a user from the Volunteers sheet. """
@@ -130,6 +138,56 @@ def delete_user(sheet, username):
     sheet.delete_rows(row_num)
     return True
 
+# --- FAQ Management Functions ---
+def get_all_faqs(sheet):
+    """ Fetches all FAQs from the FAQ sheet. """
+    return get_all_records_safely(sheet, FAQ_HEADERS)
+
+def add_faq(sheet, question, answer):
+    """ Adds a new FAQ to the sheet. """
+    sheet.append_row([question, answer])
+    return True
+
+def delete_faq(sheet, row_id):
+    """ Deletes an FAQ by its row number. """
+    try:
+        sheet.delete_rows(int(row_id))
+        return True
+    except (ValueError, gspread.exceptions.APIError):
+        return False
+
+# --- Leaderboard Function ---
+def get_volunteer_leaderboard(sheet):
+    """ Calculates the number of students processed by each volunteer. """
+    all_students = get_all_records_safely(sheet, STUDENT_HEADERS)
+    volunteer_updates = []
+    
+    for student in all_students:
+        for i in range(5):
+            volunteer = student.get(f'stage{i}_{"entry" if i==0 else "hostel" if i==1 else "insurance" if i==2 else "lhc_docs" if i==3 else "doaa"}_by')
+            if volunteer:
+                volunteer_updates.append(volunteer)
+                
+    leaderboard = Counter(volunteer_updates).most_common()
+    return leaderboard
+
+# --- Announcement Functions ---
+def get_announcement(sheet):
+    """ Gets the current announcement message from cell A2. """
+    try:
+        if sheet.row_count >= 2:
+            return sheet.cell(2, 1).value
+        return None
+    except Exception:
+        return None
+
+def update_announcement(sheet, message):
+    """ Updates or clears the announcement message in cell A2. """
+    try:
+        sheet.update_cell(2, 1, message)
+        return True
+    except Exception:
+        return False
 
 # --- Command-Line Tool Functions (Preserved and Updated) ---
 def add_student(sheet):
@@ -142,7 +200,7 @@ def add_student(sheet):
     student_name = input("Enter Student's Full Name: ").strip()
     new_row_data = [
         app_id, student_name,
-        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''
+        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', '', 'no'
     ]
     sheet.append_row(new_row_data)
     print(f"✅ Success: Student '{student_name}' ({app_id}) has been added.")
@@ -291,7 +349,7 @@ def bulk_upload_students(sheet):
             new_students = []
             for row in reader:
                 if len(row) == 2:
-                    new_students.append([row[0], row[1], 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', ''])
+                    new_students.append([row[0], row[1], 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', '', 'no'])
             if new_students:
                 sheet.append_rows(new_students, value_input_option='USER_ENTERED')
                 print(f"✅ Success: {len(new_students)} students uploaded.")
@@ -327,20 +385,16 @@ def view_flagged_students(sheet):
     
     if flagged_count == 0: print("No students are currently flagged as stuck.")
 
-def show_volunteer_faq():
+def show_volunteer_faq(faq_sheet):
     """ Displays a pre-written FAQ for the CLI. """
     print("\n--- Volunteer FAQ ---")
-    faq_text = """
-    Q1: What documents are required at LHC?
-    A1: Original Class 10/12 mark sheets, IAT admit card, photo ID, fee receipt.
-
-    Q2: What if a student hasn't paid for health insurance?
-    A2: Direct them to the SBI branch on campus first.
-
-    Q3: What if a student is missing a document?
-    A3: Use the 'Add Note' function to record the missing document and escalate.
-    """
-    print(faq_text)
+    faqs = get_all_faqs(faq_sheet)
+    if not faqs:
+        print("No FAQs found.")
+        return
+    for i, faq in enumerate(faqs, 1):
+        print(f"\nQ{i}: {faq['question']}")
+        print(f"A{i}: {faq['answer']}")
 
 def generate_end_of_day_report(sheet):
     """ Generates a summary text file of the day's activities for the CLI. """
@@ -377,12 +431,13 @@ def main():
 
     try:
         student_sheet = spreadsheet.worksheet("Students")
-    except gspread.WorksheetNotFound:
-        print("❌ CRITICAL ERROR: 'Students' worksheet not found.")
+        faq_sheet = spreadsheet.worksheet("FAQ")
+    except gspread.WorksheetNotFound as e:
+        print(f"❌ CRITICAL ERROR: A required worksheet was not found: {e}")
         time.sleep(5)
         return
 
-    if not verify_headers(student_sheet, STUDENT_HEADERS):
+    if not verify_headers(student_sheet, STUDENT_HEADERS) or not verify_headers(faq_sheet, FAQ_HEADERS):
         print("\nProgram cannot continue due to header mismatch. Please fix the sheet and restart.")
         time.sleep(10)
         return
@@ -410,7 +465,7 @@ def main():
         elif choice == 5: view_lhc_queue(student_sheet)
         elif choice == 6: view_flagged_students(student_sheet)
         elif choice == 7: bulk_upload_students(student_sheet)
-        elif choice == 8: show_volunteer_faq()
+        elif choice == 8: show_volunteer_faq(faq_sheet)
         elif choice == 9: generate_end_of_day_report(student_sheet)
         elif choice == 0: print("Exiting program. Goodbye!"); break
         else: print("Invalid choice.")

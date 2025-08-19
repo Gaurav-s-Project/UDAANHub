@@ -213,6 +213,21 @@ body.dark-mode #add-student-card input[readonly] {
 #queue-search { width: 100%; padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background-color: var(--light-bg); color: var(--text-dark); }
 #queue-search:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
 
+/* --- NEW: Dynamic LHC Queue Box Styles --- */
+.stat-box.lhc-queue.lhc-safe h2 {
+    color: var(--success-color);
+}
+.stat-box.lhc-queue.lhc-danger h2 {
+    color: var(--danger-color);
+}
+.stat-box.lhc-queue.lhc-danger {
+    border-color: var(--danger-color);
+    animation: pulse-danger 2s infinite;
+}
+body.dark-mode .stat-box.lhc-queue.lhc-danger {
+    background-color: #2c1d27;
+}
+
 /* --- ADMIN PANEL & STUDENT LIST TABLE --- */
 .user-list table, .student-list-container table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
 .user-list th, .user-list td, .student-list-container th, .student-list-container td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-light); }
@@ -441,3 +456,4 @@ body.dark-mode .action-btn.edit { background-color: #4B5563; color: var(--text-l
     margin: 0;
     color: var(--text-muted-light);
 }
+

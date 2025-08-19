@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage FAQ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    {% if announcement %}
+    <div class="broadcast-banner">
+        <p class="scrolling-text">{{ announcement }}</p>
+    </div>
+    {% endif %}
+
+    <div class="container">
+        <header class="app-header">
+            <div class="logo">UDAAN<span>Hub</span></div>
+            <nav class="nav-menu">
+                {% if 'username' in session %}
+                    <a href="/" class="nav-link">Dashboard</a>
+                    <a href="/admin" class="nav-link">Admin Panel</a>
+                    <a href="/logout" class="logout-btn">Logout</a>
+                {% endif %}
+                <!-- <label class="dark-mode-switch">
+                    <input type="checkbox">
+                    <span class="slider"></span>
+                </label> -->
+            </nav>
+            <div class="hamburger">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </header>
+
+        <main>
+            <div class="card">
+                <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                <a href="/admin" class="back-link">&larr; Back to Admin Panel</a>
+                <h1>Manage FAQs</h1>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                <div class="faq-list">
+                    {% for faq in faqs %}
+                    <div class="faq-admin-item">
+                        <div class="faq-content">
+                            <strong>Q: {{ faq.question }}</strong>
+                            <p>A: {{ faq.answer }}</p>
+                        </div>
+                        <a href="/admin/faq/delete/{{ faq.row_id }}" class="action-btn delete" onclick="return confirm('Delete this FAQ?');">Delete</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card">
+                <h2>Add New FAQ</h2>
+                <form action="/admin/faq/add" method="post">
+                    <div class="form-group">
+                        <label for="question">Question</label>
+                        <input type="text" id="question" name="question" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="answer">Answer</label>
+                        <textarea id="answer" name="answer" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="primary-btn">Add FAQ</button>
+                </form>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 Cyberheathens, IISER Bhopal. All Rights Reserved.</p>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

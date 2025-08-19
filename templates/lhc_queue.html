@@ -8,6 +8,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+    {% if announcement %}
+    <div class="broadcast-banner">
+        <p class="scrolling-text">{{ announcement }}</p>
+    </div>
+    {% endif %}
+    
     <div class="container">
         <header class="app-header">
             <div class="logo">UDAAN<span>Hub</span></div>

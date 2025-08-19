@@ -10,6 +10,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.querySelector('.close-modal');
     const queueSearchInput = document.getElementById('queue-search');
 
+    const studentListSearch = document.getElementById('student-list-search');
+    if (studentListSearch) {
+        const studentRows = document.querySelectorAll('.student-row');
+        studentListSearch.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            studentRows.forEach(row => {
+                const rowText = row.textContent.toLowerCase();
+                row.style.display = rowText.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+
     // 1. Sticky Header Effect
     if (header) {
         window.addEventListener('scroll', () => {

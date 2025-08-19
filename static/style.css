@@ -143,8 +143,13 @@ input[type="text"], input[type="password"], textarea, select {
 input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
 
 /* --- LOGIN & DASHBOARD SPECIFIC --- */
-#login-container label, #add-student-card label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+#login-container label, #add-student-card label { border-left: 5px solid var(--warning-color);display: block; margin-bottom: 0.5rem; font-weight: 500; }
 .form-group { margin-bottom: 1.5rem; }
+#add-student-card input[readonly] {
+    background-color: #E5E7EB;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
 .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; }
 .stat-box { padding: 1.5rem; text-align: center; border-radius: var(--border-radius); background: var(--light-bg); border: 1px solid var(--border-light); transition: transform 0.2s, box-shadow 0.2s; }
 .stat-box:hover { transform: translateY(-5px); box-shadow: var(--shadow-md); }
@@ -208,10 +213,10 @@ body.dark-mode #add-student-card input[readonly] {
 #queue-search { width: 100%; padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--border-light); border-radius: 0.5rem; background-color: var(--light-bg); color: var(--text-dark); }
 #queue-search:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
 
-/* --- ADMIN PANEL TABLE --- */
-.user-list table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
-.user-list th, .user-list td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-light); }
-.user-list th { font-weight: 600; color: var(--text-muted-light); }
+/* --- ADMIN PANEL & STUDENT LIST TABLE --- */
+.user-list table, .student-list-container table { width: 100%; border-collapse: collapse; margin-top: 1.5rem; }
+.user-list th, .user-list td, .student-list-container th, .student-list-container td { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-light); }
+.user-list th, .student-list-container th { font-weight: 600; color: var(--text-muted-light); }
 .role-badge { padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
 .role-admin { background-color: #DBEAFE; color: #1E40AF; }
 body.dark-mode .role-admin { background-color: #1E40AF; color: #DBEAFE; }
@@ -220,6 +225,43 @@ body.dark-mode .role-volunteer { background-color: #4338CA; color: #E0E7FF; }
 .action-btn.edit { background-color: #F3F4F6; color: var(--text-muted-light); }
 body.dark-mode .action-btn.edit { background-color: #4B5563; color: var(--text-light); }
 .action-btn.delete { background-color: var(--danger-color); color: white; }
+
+/* --- RESPONSIVE DESIGN --- */
+@media (max-width: 768px) {
+    .nav-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: var(--light-card);
+        flex-direction: column;
+        align-items: center;
+        padding: 1rem 0;
+        box-shadow: var(--shadow-md);
+        border-top: 1px solid var(--border-light);
+    }
+    .nav-menu.active {
+        display: flex;
+    }
+    .nav-link, .logout-btn {
+        width: 100%;
+        text-align: center;
+        padding: 1rem 0;
+    }
+    .hamburger {
+        display: flex;
+    }
+    .hamburger.active .bar:nth-child(1) {
+        transform: rotate(-45deg) translate(-5px, 6px);
+    }
+    .hamburger.active .bar:nth-child(2) {
+        opacity: 0;
+    }
+    .hamburger.active .bar:nth-child(3) {
+        transform: rotate(45deg) translate(-5px, -6px);
+    }
+}
 
 /* --- MODAL STYLES --- */
 .modal-overlay {
@@ -306,6 +348,96 @@ body.dark-mode .action-btn.edit { background-color: #4B5563; color: var(--text-l
     }
 }
 
+.stat-box.flagged h2 { color: var(--danger-color); }
+.flag-btn {
+    background-color: var(--warning-color);
+    color: white;
+}
+.flag-btn.flagged {
+    background-color: var(--danger-color);
+}
+
+/* --- NEW: All Students List Page --- */
+.student-list-container { max-height: 60vh; overflow-y: auto; }
+.student-list-container table { width: 100%; border-collapse: collapse; }
+/* ... (table styles) ... */
+
+/* --- NEW: Admin FAQ Management --- */
+.faq-admin-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-light); }
+.faq-content p { margin: 0.5rem 0 0; color: var(--text-muted-light); }
+
+/* --- NEW: Leaderboard --- */
+.leaderboard-list { list-style: none; padding: 0; }
+.leaderboard-item { display: flex; align-items: center; padding: 1rem; border-bottom: 1px solid var(--border-light); font-size: 1.1rem; }
+.rank { font-weight: 700; color: var(--text-muted-light); width: 40px; }
+.volunteer-name { font-weight: 500; flex-grow: 1; }
+.update-count { font-weight: 700; color: var(--primary-color); }
+
+/* --- BROADCAST BANNER --- */
+.broadcast-banner {
+    position: fixed; /* Makes the banner stick to the top */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1001; /* Ensures it's on top of the header */
+    background-color: #78d1ec;
+    color: #070707;
+    font-weight: 700;
+    text-align: center;
+    padding: 0.5rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.scrolling-text {
+    display: inline-block;
+    padding-left: 100%; /* Starts the text off-screen to the right */
+    animation: scroll-left 20s linear infinite;
+    margin: 0;
+}
+
+@keyframes scroll-left {
+    0% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(-200%); /* Moves the text across the screen */
+    }
+}
+
+
 /* --- ANIMATIONS --- */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideDownFadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- NEW: Admin Panel Navigation --- */
+.admin-nav {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+}
+.admin-nav-link {
+    background-color: var(--light-bg);
+    border: 1px solid var(--border-light);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.admin-nav-link:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color);
+}
+.admin-nav-link h2 {
+    margin: 0 0 0.5rem 0;
+    color: var(--primary-color);
+    border: none;
+}
+.admin-nav-link p {
+    margin: 0;
+    color: var(--text-muted-light);
+}

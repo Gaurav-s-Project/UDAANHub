@@ -7,6 +7,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+    {% if announcement %}
+    <div class="broadcast-banner">
+        <p class="scrolling-text">{{ announcement }}</p>
+    </div>
+    {% endif %}
+
     <div class="container">
         <header class="app-header">
             <div class="logo">UDAAN<span>Hub</span></div>
@@ -35,6 +42,14 @@
             <div class="card">
                 <div class="student-header">
                     <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                    <!-- NEW: Flag for Assistance Button -->
+                    <form action="/flag_student" method="post" class="inline-form">
+                        <input type="hidden" name="student_id" value="{{ student.student_identifier }}">
+                        <input type="hidden" name="current_flag" value="{{ student.flagged }}">
+                        <button type="submit" class="action-btn flag-btn {% if student.flagged == 'yes' %}flagged{% endif %}">
+                            {% if student.flagged == 'yes' %}Unflag{% else %}Flag for Assistance{% endif %}
+                        </button>
+                    </form>
                     <button id="edit-details-btn" class="action-btn edit">Edit Details</button>
                 </div>
                 <h1>{{ student.student_name }}</h1>

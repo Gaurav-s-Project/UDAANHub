@@ -7,19 +7,34 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
+
+    {% if announcement %}
+    <div class="broadcast-banner">
+        <p class="scrolling-text">{{ announcement }}</p>
+    </div>
+    {% endif %}
+    
     <div class="container">
         <header class="app-header">
             <div class="logo">UDAAN<span>Hub</span></div>
-            <div class="user-info">
-                <span>Welcome, <strong>{{ session.username.capitalize() }}</strong> (Admin)!</span>
-                <a href="/" class="nav-link">Dashboard</a>
-                <a href="/logout" class="logout-btn">Logout</a>
+            <nav class="nav-menu">
+                {% if 'username' in session %}
+                    <a href="/" class="nav-link">Dashboard</a>
+                    <a href="/logout" class="logout-btn">Logout</a>
+                {% endif %}
+            </nav>
+            <div class="hamburger">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
             </div>
         </header>
 
         <main>
             <div class="card">
-                <h1>Admin Panel: User Management</h1>
+                <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                <h1>Admin Panel</h1>
+                <p class="subtitle">Manage volunteers, FAQs, and site-wide announcements.</p>
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
@@ -27,9 +42,23 @@
                         {% endfor %}
                     {% endif %}
                 {% endwith %}
-                
+
+                <!-- NEW: Admin Navigation Section -->
+                <div class="admin-nav">
+                    <a href="{{ url_for('admin_announcement') }}" class="admin-nav-link">
+                        <h2>Broadcast Message</h2>
+                        <p>Set a scrolling message for all volunteers.</p>
+                    </a>
+                    <a href="{{ url_for('admin_faq') }}" class="admin-nav-link">
+                        <h2>Manage FAQs</h2>
+                        <p>Add or remove questions from the FAQ page.</p>
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>User Management</h2>
                 <div class="user-list">
-                    <h2>Current Volunteers ({{ users|length }})</h2>
                     <table>
                         <thead>
                             <tr>
@@ -58,7 +87,7 @@
 
             <div class="card">
                 <h2>Add New Volunteer</h2>
-                <form action="/admin/add_user" method="post">
+                <form action="{{ url_for('add_user') }}" method="post">
                     <div class="form-group">
                         <label for="username">Username</label>
                         <input type="text" id="username" name="username" required>

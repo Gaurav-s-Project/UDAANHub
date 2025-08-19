@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flagged Students</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    {% if announcement %}
+    <div class="broadcast-banner">
+        <p class="scrolling-text">{{ announcement }}</p>
+    </div>
+    {% endif %}
+    
+    <div class="container">
+        <header class="app-header">
+            <div class="logo">UDAAN<span>Hub</span></div>
+            <nav class="nav-menu">
+                {% if 'username' in session %}
+                    <a href="/" class="nav-link">Dashboard</a>
+                    <a href="/students" class="nav-link">All Students</a>
+                    <a href="/leaderboard" class="nav-link">Leaderboard</a>
+                    <a href="/profile" class="nav-link">Profile</a>
+                    {% if session.role == 'admin' %}
+                        <a href="/admin" class="nav-link">Admin Panel</a>
+                    {% endif %}
+                    <a href="/faq" class="nav-link">FAQ</a>
+                    <a href="/logout" class="logout-btn">Logout</a>
+                {% endif %}
+                <!-- <label class="dark-mode-switch">
+                    <input type="checkbox">
+                    <span class="slider"></span>
+                </label> -->
+            </nav>
+            <div class="hamburger">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </header>
+
+        <main>
+            <div class="card">
+                <a href="/" class="back-link">&larr; Back to Dashboard</a>
+                <h1>Flagged for Assistance</h1>
+                <p class="subtitle">These students require special attention. Unflag them from their details page once resolved.</p>
+
+                <div class="queue-container">
+                    {% if students %}
+                        <ul class="queue-list">
+                            {% for student in students %}
+                                <li class="queue-item">
+                                    <span class="student-name">{{ student.student_name }}</span>
+                                    <span class="student-id">{{ student.student_identifier }}</span>
+                                    <div class="queue-actions">
+                                        <a href="{{ url_for('search_student_get', search_term=student.student_identifier) }}" class="action-btn view-btn">Resolve</a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="empty-queue">
+                            <h2>No students are currently flagged.</h2>
+                            <p>All issues are resolved.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2025 Cyberheathens, IISER Bhopal. All Rights Reserved.</p>
+        </footer>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

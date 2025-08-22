@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Details: {{ student.student_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
 
     {% if announcement %}
@@ -19,12 +21,12 @@
             <div class="logo">UDAAN<span>Hub</span></div>
             <nav class="nav-menu">
                 {% if 'username' in session %}
-                    <a href="/profile" class="nav-link">Profile</a>
-                    {% if session.role == 'admin' %}
-                        <a href="/admin" class="nav-link">Admin Panel</a>
-                    {% endif %}
-                    <a href="/faq" class="nav-link">FAQ</a>
-                    <a href="/logout" class="logout-btn">Logout</a>
+                <a href="/profile" class="nav-link">Profile</a>
+                {% if session.role == 'admin' %}
+                <a href="/admin" class="nav-link">Admin Panel</a>
+                {% endif %}
+                <a href="/faq" class="nav-link">FAQ</a>
+                <a href="/logout" class="logout-btn">Logout</a>
                 {% endif %}
                 <!-- <label class="dark-mode-switch">
                     <input type="checkbox">
@@ -46,7 +48,8 @@
                     <form action="/flag_student" method="post" class="inline-form">
                         <input type="hidden" name="student_id" value="{{ student.student_identifier }}">
                         <input type="hidden" name="current_flag" value="{{ student.flagged }}">
-                        <button type="submit" class="action-btn flag-btn {% if student.flagged == 'yes' %}flagged{% endif %}">
+                        <button type="submit"
+                            class="action-btn flag-btn {% if student.flagged == 'yes' %}flagged{% endif %}">
                             {% if student.flagged == 'yes' %}Unflag{% else %}Flag for Assistance{% endif %}
                         </button>
                     </form>
@@ -56,28 +59,31 @@
                 <p><strong>Application ID:</strong> {{ student.student_identifier }}</p>
 
                 {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="flash {{ category }}">{{ message }}</div>
-                        {% endfor %}
-                    {% endif %}
+                {% if messages %}
+                {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
                 {% endwith %}
-                
+
                 <form action="/update_status" method="post">
                     <input type="hidden" name="student_id" value="{{ student.student_identifier }}">
                     <h2>Registration Status</h2>
-                    
+
                     <div class="stage">
                         <div class="stage-details">
-                            <strong>1. Entry Gate:</strong> 
-                            <span class="status status-{{ student.stage0_entry_status | replace(' ', '-') }}">{{ student.stage0_entry_status }}</span>
-                            {% if student.stage0_entry_by %}<br><small>by {{ student.stage0_entry_by }} at {{ student.stage0_entry_ts }}</small>{% endif %}
+                            <strong>1. Entry Gate:</strong>
+                            <span class="status status-{{ student.stage0_entry_status | replace(' ', '-') }}">{{
+                                student.stage0_entry_status }}</span>
+                            {% if student.stage0_entry_by %}<br><small>by {{ student.stage0_entry_by }} at {{
+                                student.stage0_entry_ts }}</small>{% endif %}
                         </div>
                         <div class="update-form">
                             {% if student.stage0_entry_status == 'Done' %}
-                                <button type="submit" name="action" value="unmark_entry" class="unmark-btn">Unmark</button>
+                            <button type="submit" name="action" value="unmark_entry" class="unmark-btn">Unmark</button>
                             {% else %}
-                                <button type="submit" name="action" value="mark_entry" class="primary-btn">Mark as Done</button>
+                            <button type="submit" name="action" value="mark_entry" class="primary-btn">Mark as
+                                Done</button>
                             {% endif %}
                         </div>
                     </div>
@@ -85,14 +91,17 @@
                     <div class="stage">
                         <div class="stage-details">
                             <strong>2. Hostel Registration:</strong>
-                            <span class="status status-{{ student.stage1_hostel_status | replace(' ', '-') }}">{{ student.stage1_hostel_status }}</span>
-                            {% if student.stage1_hostel_by %}<br><small>by {{ student.stage1_hostel_by }} at {{ student.stage1_hostel_ts }}</small>{% endif %}
+                            <span class="status status-{{ student.stage1_hostel_status | replace(' ', '-') }}">{{
+                                student.stage1_hostel_status }}</span>
+                            {% if student.stage1_hostel_by %}<br><small>by {{ student.stage1_hostel_by }} at {{
+                                student.stage1_hostel_ts }}</small>{% endif %}
                         </div>
                         <div class="update-form">
                             {% if student.stage1_hostel_status == 'Done' %}
-                                <button type="submit" name="action" value="unmark_hostel" class="unmark-btn">Unmark</button>
+                            <button type="submit" name="action" value="unmark_hostel" class="unmark-btn">Unmark</button>
                             {% else %}
-                                <button type="submit" name="action" value="mark_hostel" class="primary-btn">Mark as Done</button>
+                            <button type="submit" name="action" value="mark_hostel" class="primary-btn">Mark as
+                                Done</button>
                             {% endif %}
                         </div>
                     </div>
@@ -100,14 +109,18 @@
                     <div class="stage">
                         <div class="stage-details">
                             <strong>3. Health Insurance:</strong>
-                            <span class="status status-{{ student.stage2_insurance_status | replace(' ', '-') }}">{{ student.stage2_insurance_status }}</span>
-                            {% if student.stage2_insurance_by %}<br><small>by {{ student.stage2_insurance_by }} at {{ student.stage2_insurance_ts }}</small>{% endif %}
+                            <span class="status status-{{ student.stage2_insurance_status | replace(' ', '-') }}">{{
+                                student.stage2_insurance_status }}</span>
+                            {% if student.stage2_insurance_by %}<br><small>by {{ student.stage2_insurance_by }} at {{
+                                student.stage2_insurance_ts }}</small>{% endif %}
                         </div>
                         <div class="update-form">
-                             {% if student.stage2_insurance_status == 'Done' %}
-                                <button type="submit" name="action" value="unmark_insurance" class="unmark-btn">Unmark</button>
+                            {% if student.stage2_insurance_status == 'Done' %}
+                            <button type="submit" name="action" value="unmark_insurance"
+                                class="unmark-btn">Unmark</button>
                             {% else %}
-                                <button type="submit" name="action" value="mark_insurance" class="primary-btn">Mark as Done</button>
+                            <button type="submit" name="action" value="mark_insurance" class="primary-btn">Mark as
+                                Done</button>
                             {% endif %}
                         </div>
                     </div>
@@ -115,15 +128,35 @@
                     <div class="stage">
                         <div class="stage-details">
                             <strong>4. LHC Registration:</strong>
-                            <span class="status status-{{ student.stage3_lhc_docs_status | replace(' ', '-') }}">{{ student.stage3_lhc_docs_status }}</span>
-                            {% if student.stage3_lhc_docs_by %}<br><small>by {{ student.stage3_lhc_docs_by }} at {{ student.stage3_lhc_docs_ts }}</small>{% endif %}
+                            <span class="status status-{{ student.stage3_lhc_docs_status | replace(' ', '-') }}">{{
+                                student.stage3_lhc_docs_status }}</span>
+                            {% if student.stage3_lhc_docs_by %}<br><small>by {{ student.stage3_lhc_docs_by }} at {{
+                                student.stage3_lhc_docs_ts }}</small>{% endif %}
                         </div>
+                        <!-- In student_details.html, find the LHC Registration stage -->
                         <div class="update-form">
-                             {% if student.stage3_lhc_docs_status == 'Done' %}
-                                <button type="submit" name="action" value="unmark_lhc_docs" class="unmark-btn">Unmark</button>
+                            <!-- ADD THIS BUTTON -->
+                            <button type="button" id="verify-docs-btn" class="action-btn">Verify Documents</button>
+
+                            {% if student.stage3_lhc_docs_status == 'Done' %}
+                            <button type="submit" name="action" value="unmark_lhc_docs"
+                                class="unmark-btn">Unmark</button>
                             {% else %}
-                                <button type="submit" name="action" value="mark_lhc_docs_queue">Set 'In Queue'</button>
-                                <button type="submit" name="action" value="mark_lhc_docs_done" class="primary-btn">Mark 'Done'</button>
+                            <button type="submit" name="action" value="mark_lhc_docs_queue">Set 'In Queue'</button>
+                            <!-- UPDATE THIS BUTTON to be disabled if docs are not verified -->
+                            <button type="submit" name="action" value="mark_lhc_docs_done" class="primary-btn" {% if not
+                                (student.verified_10th_marksheet=='yes' and student.verified_12th_marksheet=='yes' and
+                                student.verified_iat_admit_card=='yes' and student.verified_transfer_certificate=='yes'
+                                and student.verified_fee_receipt=='yes' and student.verified_caste_certificate=='yes' )
+                                %} disabled title="All required documents must be verified first" {% endif %}, {% if not
+                                (student.verified_10th_marksheet=='yes' and student.verified_12th_marksheet=='yes' and
+                                student.verified_iat_admit_card=='yes' and student.verified_transfer_certificate=='yes'
+                                ) %} disabled
+                                title="All required documents must be verified first via the 'Verify Documents' button"
+                                {% endif %}>
+
+                                Mark 'Done'
+                            </button>
                             {% endif %}
                         </div>
                     </div>
@@ -131,14 +164,17 @@
                     <div class="stage">
                         <div class="stage-details">
                             <strong>5. Final DoAA Approval:</strong>
-                            <span class="status status-{{ student.stage4_doaa_status | replace(' ', '-') }}">{{ student.stage4_doaa_status }}</span>
-                            {% if student.stage4_doaa_by %}<br><small>by {{ student.stage4_doaa_by }} at {{ student.stage4_doaa_ts }}</small>{% endif %}
+                            <span class="status status-{{ student.stage4_doaa_status | replace(' ', '-') }}">{{
+                                student.stage4_doaa_status }}</span>
+                            {% if student.stage4_doaa_by %}<br><small>by {{ student.stage4_doaa_by }} at {{
+                                student.stage4_doaa_ts }}</small>{% endif %}
                         </div>
                         <div class="update-form">
                             {% if student.stage4_doaa_status == 'Done' %}
-                                <button type="submit" name="action" value="unmark_doaa" class="unmark-btn">Unmark</button>
+                            <button type="submit" name="action" value="unmark_doaa" class="unmark-btn">Unmark</button>
                             {% else %}
-                                <button type="submit" name="action" value="mark_doaa" class="primary-btn">Mark as Done</button>
+                            <button type="submit" name="action" value="mark_doaa" class="primary-btn">Mark as
+                                Done</button>
                             {% endif %}
                         </div>
                     </div>
@@ -149,7 +185,8 @@
                 <h2>Notes</h2>
                 <form action="/update_note" method="post" class="notes-form">
                     <input type="hidden" name="student_id" value="{{ student.student_identifier }}">
-                    <textarea name="notes" rows="3" placeholder="Add any special notes here...">{{ student.Notes }}</textarea>
+                    <textarea name="notes" rows="3"
+                        placeholder="Add any special notes here...">{{ student.Notes }}</textarea>
                     <button type="submit" class="primary-btn">Save Note</button>
                 </form>
             </div>
@@ -169,17 +206,51 @@
                 <input type="hidden" name="original_student_id" value="{{ student.student_identifier }}">
                 <div class="form-group">
                     <label for="student_name">Student Name</label>
-                    <input type="text" id="student_name" name="student_name" value="{{ student.student_name }}" required>
+                    <input type="text" id="student_name" name="student_name" value="{{ student.student_name }}"
+                        required>
                 </div>
                 <div class="form-group">
                     <label for="student_identifier">Application ID</label>
-                    <input type="text" id="student_identifier" name="student_identifier" value="{{ student.student_identifier }}" required>
+                    <input type="text" id="student_identifier" name="student_identifier"
+                        value="{{ student.student_identifier }}" required>
                 </div>
                 <button type="submit" class="primary-btn">Save Changes</button>
             </form>
         </div>
     </div>
+    <!-- Hidden Modal for Document Checklist -->
+    <div id="doc-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Document Checklist</h2>
+            <p class="subtitle">Verify documents against the student's self-reported list.</p>
+            <!-- In student_details.html, replace the form inside the doc-modal -->
+            <form action="/update_documents" method="post" id="doc-checklist-form">
+                <input type="hidden" name="student_id" value="{{ student.student_identifier }}">
 
+                {% for doc in ["10th Marksheet", "12th Marksheet", "Caste Certificate", "IAT Admit Card", "Transfer
+                Certificate", "Fee Receipt"] %}
+                <div class="checklist-item">
+                    <label class="checkbox-label">
+                        <!-- THIS IS THE CORRECTED LINE -->
+                        <input type="checkbox" name="{{ doc }}" value="yes" {% if student['verified_' +
+                            doc.lower().replace(' ', ' _').replace('-', '_' )]=='yes' %}checked{% endif %}>
+                        {{ doc }}
+                    </label>
+
+                    {% if doc in doc_responses %}
+                    <span class="self-reported-status reported">Student Reported: YES</span>
+                    {% else %}
+                    <span class="self-reported-status not-reported">Student Reported: NO</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="primary-btn">Save Verified Checklist</button>
+            </form>
+        </div>
+    </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
+
 </html>

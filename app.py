@@ -17,6 +17,7 @@ if spreadsheet:
         volunteer_sheet = spreadsheet.worksheet('Volunteers')
         faq_sheet = spreadsheet.worksheet('FAQ')
         announcement_sheet = spreadsheet.worksheet('Announcements')
+        doc_response_sheet = spreadsheet.worksheet('DocumentResponses')
         # Verify headers for all sheets
         backend.verify_headers(student_sheet, backend.STUDENT_HEADERS)
         backend.verify_headers(volunteer_sheet, backend.VOLUNTEER_HEADERS)
@@ -24,9 +25,9 @@ if spreadsheet:
         backend.verify_headers(announcement_sheet, backend.ANNOUNCEMENT_HEADERS)
     except gspread.WorksheetNotFound as e:
         print(f"❌ CRITICAL ERROR: A required worksheet was not found: {e}")
-        student_sheet, volunteer_sheet, faq_sheet, announcement_sheet = None, None, None, None
+        student_sheet, volunteer_sheet, faq_sheet, announcement_sheet, doc_response_sheet = None, None, None, None, None
 else:
-    student_sheet, volunteer_sheet, faq_sheet, announcement_sheet = None, None, None, None
+    student_sheet, volunteer_sheet, faq_sheet, announcement_sheet, doc_response_sheet = None, None, None, None, None
 
 # --- Context Processor to make announcement available to all templates ---
 @app.context_processor
@@ -87,20 +88,6 @@ def login():
     else:
         flash('Invalid username or password.', 'error')
     return redirect(url_for('index'))
-
-# ADD this new route to app.py
-
-@app.route('/flagged')
-@login_required
-def flagged_students():
-    if not student_sheet: 
-        return "Error: Student Sheet not connected."
-    
-    all_records = backend.get_all_records_safely(student_sheet, backend.STUDENT_HEADERS)
-    # Filter the list to find students who are flagged
-    flagged_list = [r for r in all_records if r.get('flagged') == 'yes']
-    
-    return render_template('flagged_students.html', students=flagged_list)
 
 @app.route('/logout')
 def logout():
@@ -180,11 +167,23 @@ def update_status():
     else:
         update_by, update_ts = volunteer_name, timestamp
         new_status = 'In Queue' if 'queue' in action else 'Done'
+    
     if stage_name == 'doaa' and action_type == 'mark':
         student_data = student_sheet.row_values(row_number)
         if not all(s == 'Done' for s in [student_data[2], student_data[5], student_data[8], student_data[11]]):
              flash("Error: All previous stages must be 'Done'.", "error")
              return redirect(url_for('search_student_get', search_term=student_id))
+    
+    if stage_name == 'lhc_docs' and 'done' in action:
+        student_data = student_sheet.row_values(row_number)
+        required_docs_verified = (
+            student_data[19] == 'yes' and student_data[20] == 'yes' and
+            student_data[22] == 'yes' and student_data[23] == 'yes'
+        )
+        if not required_docs_verified:
+            flash("Error: All required documents must be verified before marking LHC Registration as Done.", "error")
+            return redirect(url_for('search_student_get', search_term=student_id))
+
     student_sheet.update_cells([gspread.Cell(row_number, i, v) for i, v in enumerate([new_status, update_by, update_ts], start=cols_start)])
     flash(f"Status for {student_id} updated.", "success")
     return redirect(url_for('search_student_get', search_term=student_id))
@@ -235,7 +234,9 @@ def search_student_get():
     if not row_number: return f"Student '{search_term}' not found. <a href='/'>Go back</a>."
     student_data_list = student_sheet.row_values(row_number)
     student_dict = dict(zip(backend.STUDENT_HEADERS, student_data_list))
-    return render_template('student_details.html', student=student_dict)
+    doc_responses = backend.get_document_responses(doc_response_sheet, search_term)
+    required_docs = ["10th Marksheet", "12th Marksheet", "IAT Admit Card", "Transfer Certificate", "Fee Receipt", "Caste Certificate"]
+    return render_template('student_details.html', student=student_dict, doc_responses=doc_responses, required_docs=required_docs)
 
 # --- Feature Routes ---
 @app.route('/lhc_queue')
@@ -277,6 +278,60 @@ def leaderboard():
     if not student_sheet: return "Error: Student Sheet not connected."
     board = backend.get_volunteer_leaderboard(student_sheet)
     return render_template('leaderboard.html', leaderboard=board)
+
+@app.route('/flagged')
+@login_required
+def flagged_students():
+    if not student_sheet: return "Error: Student Sheet not connected."
+    all_records = backend.get_all_records_safely(student_sheet, backend.STUDENT_HEADERS)
+    flagged_list = [r for r in all_records if r.get('flagged') == 'yes']
+    return render_template('flagged_students.html', students=flagged_list)
+
+# --- NEW: Route to handle updating the verified document checklist ---
+@app.route('/update_documents', methods=['POST'])
+@login_required
+def update_documents():
+    student_id = request.form.get('student_id')
+    
+    verified_docs = {
+        '10th Marksheet': 'yes' if '10th Marksheet' in request.form else 'no',
+        '12th Marksheet': 'yes' if '12th Marksheet' in request.form else 'no',
+        'Caste Certificate': 'yes' if 'Caste Certificate' in request.form else 'no',
+        'IAT Admit Card': 'yes' if 'IAT Admit Card' in request.form else 'no',
+        'Transfer Certificate': 'yes' if 'Transfer Certificate' in request.form else 'no',
+        'Fee Receipt': 'yes' if 'Fee Receipt' in request.form else 'no'
+    }
+    
+    backend.update_verified_documents(student_sheet, student_id, verified_docs)
+    flash("Verified document checklist has been saved.", "success")
+    return redirect(url_for('search_student_get', search_term=student_id))
+
+# --- Document Checklist Functions ---
+def get_document_responses(sheet, app_id):
+    """ Fetches a student's self-reported document checklist from the form responses. """
+    try:
+        all_responses = get_all_records_safely(sheet, DOC_RESPONSE_HEADERS)
+        for response in all_responses:
+            if str(response.get('Application No')) == str(app_id):
+                return response.get('Documents Available', '').split(', ')
+        return []
+    except Exception:
+        return []
+
+def update_verified_documents(sheet, student_id, verified_docs):
+    """ Updates the verified document status in the main Students sheet. """
+    row_num = find_student_row(sheet, student_id)
+    if not row_num: return False
+    
+    doc_map = {
+        '10th Marksheet': 20, '12th Marksheet': 21, 'Caste Certificate': 22,
+        'IAT Admit Card': 23, 'Transfer Certificate': 24, 'Fee Receipt': 25
+    }
+    
+    for doc_name, status in verified_docs.items():
+        if doc_name in doc_map:
+            sheet.update_cell(row_num, doc_map[doc_name], status)
+    return True
 
 # --- ADMIN PANEL ROUTES ---
 @app.route('/admin')

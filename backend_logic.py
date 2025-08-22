@@ -18,11 +18,14 @@ STUDENT_HEADERS = [
     'stage2_insurance_status', 'stage2_insurance_by', 'stage2_insurance_ts',
     'stage3_lhc_docs_status', 'stage3_lhc_docs_by', 'stage3_lhc_docs_ts',
     'stage4_doaa_status', 'stage4_doaa_by', 'stage4_doaa_ts',
-    'Notes', 'flagged'
+    'Notes', 'flagged','verified_10th_marksheet', 'verified_12th_marksheet', 'verified_caste_certificate', 
+    'verified_iat_admit_card', 'verified_transfer_certificate','verified_fee_receipt'
 ]
 VOLUNTEER_HEADERS = ['username', 'password', 'role']
 FAQ_HEADERS = ['question', 'answer']
 ANNOUNCEMENT_HEADERS = ['message']
+# ADD this new header list
+DOC_RESPONSE_HEADERS = ['Timestamp', 'Application No', 'Documents Available']
 
 # --- Connection Functions ---
 def connect_to_spreadsheet(spreadsheet_name):
@@ -87,7 +90,7 @@ def add_student_from_webapp(sheet, app_id, student_name):
         return
     new_row_data = [
         app_id, student_name,
-        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', '', 'no'
+        'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', 'Pending', '', '', '', 'no','no', 'no', 'no', 'no', 'no','no'
     ]
     sheet.append_row(new_row_data)
     print(f"✅ New student '{student_name}' ({app_id}) added via web app.")
@@ -99,6 +102,36 @@ def update_student_flag(sheet, student_id, flag_status):
     if not row_num: return False
     # Column S is the 19th column
     sheet.update_cell(row_num, 19, flag_status)
+    return True
+
+# ADD these new functions to backend_logic.py
+
+def get_document_responses(sheet, app_id):
+    """ Fetches a student's self-reported document checklist from the form responses. """
+    try:
+        all_responses = get_all_records_safely(sheet, DOC_RESPONSE_HEADERS)
+        for response in all_responses:
+            if str(response.get('Application No')) == str(app_id):
+                # The responses are in a single comma-separated string
+                return response.get('Documents Available', '').split(', ')
+        return [] # Return empty list if not found
+    except Exception:
+        return []
+
+def update_verified_documents(sheet, student_id, verified_docs):
+    """ Updates the verified document status in the main Students sheet. """
+    row_num = find_student_row(sheet, student_id)
+    if not row_num: return False
+
+    # Dynamically update based on the docs provided
+    doc_map = {
+        '10th Marksheet': 20, '12th Marksheet': 21, 'Caste Certificate': 22,
+        'IAT Admit Card': 23, 'Transfer Certificate': 24, 'Fee Receipt': 25
+    }
+
+    for doc_name, status in verified_docs.items():
+        if doc_name in doc_map:
+            sheet.update_cell(row_num, doc_map[doc_name], status)
     return True
 
 # --- User Management Functions ---

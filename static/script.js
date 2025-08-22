@@ -135,3 +135,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ADD this new logic to script.js
+
+// --- Document Verification Modal Logic ---
+const docModal = document.getElementById('doc-modal');
+const verifyDocsBtn = document.getElementById('verify-docs-btn');
+const closeDocModalBtn = docModal ? docModal.querySelector('.close-modal') : null;
+
+if (verifyDocsBtn && docModal) {
+    verifyDocsBtn.addEventListener('click', () => {
+        docModal.style.display = 'flex';
+        setTimeout(() => { docModal.classList.add('visible'); }, 10);
+    });
+
+    if (closeDocModalBtn) {
+        closeDocModalBtn.addEventListener('click', () => {
+            docModal.classList.remove('visible');
+            setTimeout(() => { docModal.style.display = 'none'; }, 300);
+        });
+    }
+
+    docModal.addEventListener('click', (e) => {
+        if (e.target === docModal) {
+            docModal.classList.remove('visible');
+            setTimeout(() => { docModal.style.display = 'none'; }, 300);
+        }
+    });
+}
